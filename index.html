@@ -1,0 +1,603 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深海探秘 · 海洋生物科普馆</title>
+    <style>
+    :root {
+        --bg: #0a1628;
+        --card: rgba(13, 33, 55, 0.9);
+        --text: #d4e6f1;
+        --muted: #a0bcd0;
+        --accent: #00d4aa;
+        --gold: #f0c75e;
+        --panel: #0f2137;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; min-height:100vh; overflow-x:hidden; }
+    .ocean-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+    .ocean-layer { position:absolute; width:200%; height:100%; background:linear-gradient(180deg,transparent 0%,rgba(11,61,96,0.2) 40%,rgba(10,40,70,0.5) 100%); }
+    .ocean-layer:nth-child(1){ animation: wave 20s linear infinite; opacity:0.6; }
+    .ocean-layer:nth-child(2){ animation: wave 25s linear infinite reverse; opacity:0.4; }
+    @keyframes wave { 0%{ transform:translateX(0) translateY(0); } 50%{ transform:translateX(-10%) translateY(-20px); } 100%{ transform:translateX(0) translateY(0); } }
+    .main-container { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:20px; }
+    .header { text-align:center; padding:40px 0 20px; }
+    .header h1 { font-size:3rem; font-weight:800; background:linear-gradient(135deg,#00d4aa,#4dc9f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .subtitle { color:var(--muted); letter-spacing:6px; margin-top:5px; }
+    .stats { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; margin:20px 0; padding:18px; background:var(--card); border-radius:20px; backdrop-filter:blur(10px); }
+    .stat-item { text-align:center; }
+    .stat-num { font-size:2rem; font-weight:700; color:var(--accent); }
+    .stat-label { font-size:0.85rem; color:var(--muted); }
+    .actions { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin:20px 0; }
+    .btn { padding:12px 24px; border-radius:30px; font-weight:600; cursor:pointer; transition:0.3s; border:2px solid rgba(255,255,255,0.2); background:transparent; color:var(--muted); }
+    .btn-primary { background:linear-gradient(135deg,#00d4aa,#00b894); color:#0a1628; border:none; }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,212,170,0.3); }
+    .btn:hover { border-color:var(--gold); color:var(--gold); }
+    .search-box { display:flex; justify-content:center; margin:10px 0; }
+    .search-box input { padding:10px 20px; border-radius:30px; width:350px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff; outline:none; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:20px; margin-top:20px; }
+    .card { background:var(--card); border-radius:20px; padding:20px; backdrop-filter:blur(10px); transition:0.3s; border:1px solid rgba(255,255,255,0.05); }
+    .card:hover { transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.4); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .card-title { font-size:1.3rem; font-weight:700; }
+    .tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+    .tag { padding:4px 10px; border-radius:12px; font-size:0.75rem; background:rgba(255,255,255,0.1); }
+    .info-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.9rem; }
+    .info-cell { background:rgba(255,255,255,0.03); border-radius:8px; padding:8px; }
+    .desc { font-size:0.9rem; color:#bccfd9; margin-top:10px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .desc.expanded { -webkit-line-clamp:unset; }
+    .expand-btn { background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.85rem; margin-top:5px; }
+    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .modal { background:#112240; border-radius:24px; padding:30px; width:90%; max-width:500px; }
+    .modal h2 { margin-bottom:20px; }
+    .modal input, .modal select, .modal textarea { width:100%; padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); border-radius:10px; color:#fff; }
+    .modal select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23a0bcd0'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+    .modal select option { background:#112240; color:#fff; }
+    .btn-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1); border:none; color:#fff; float:right; cursor:pointer; }
+    .qa-panel { position:fixed; bottom:30px; right:30px; z-index:2000; width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#00d4aa,#4dc9f6); border:none; font-size:2rem; cursor:pointer; box-shadow:0 10px 30px rgba(0,212,170,0.4); display:flex; align-items:center; justify-content:center; }
+    .qa-box { position:fixed; bottom:100px; right:30px; z-index:2000; width:380px; height:500px; background:var(--panel); border-radius:20px; display:none; flex-direction:column; overflow:hidden; border:1px solid rgba(255,255,255,0.1); }
+    .qa-box.open { display:flex; }
+    .qa-header { padding:12px; background:rgba(0,212,170,0.2); display:flex; justify-content:space-between; font-weight:600; }
+    .qa-messages { flex:1; padding:16px; overflow-y:auto; }
+    .msg { max-width:85%; padding:10px 14px; border-radius:16px; margin:6px 0; font-size:0.9rem; }
+    .msg.user { align-self:flex-end; background:var(--accent); color:#0a1628; }
+    .msg.bot { align-self:flex-start; background:rgba(255,255,255,0.1); }
+    .qa-input { display:flex; padding:10px; border-top:1px solid rgba(255,255,255,0.1); }
+    .qa-input input { flex:1; padding:10px; border-radius:20px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff; }
+    .qa-input button { background:var(--accent); border:none; border-radius:50%; width:36px; height:36px; margin-left:8px; cursor:pointer; color:#0a1628; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="ocean-bg"><div class="ocean-layer"></div><div class="ocean-layer"></div></div>
+
+<div class="main-container">
+    <div class="header">
+        <h1>深海探秘</h1>
+        <div class="subtitle">海洋生物档案</div>
+    </div>
+    <div class="stats">
+        <div class="stat-item"><div class="stat-num" id="totalCount">0</div><div class="stat-label">收录生物</div></div>
+        <div class="stat-item"><div class="stat-num" id="habitatCount">0</div><div class="stat-label">栖息环境</div></div>
+        <div class="stat-item"><div class="stat-num" id="periodCount">0</div><div class="stat-label">生活时期</div></div>
+    </div>
+    <div class="actions">
+        <button class="btn btn-primary" onclick="openModal()"> 添加海洋生物</button>
+        <button class="btn" onclick="toggleSearch()"> 搜索</button>
+        <button class="btn" onclick="resetData()"> 恢复默认</button>
+    </div>
+    <div class="search-box" id="searchBox" style="display:none;">
+        <input type="text" id="searchInput" placeholder="搜索名称、环境、时期、食物..." oninput="filterCards()">
+    </div>
+    <div class="grid" id="cardsGrid"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+        <button class="btn-close" onclick="closeModal()">✕</button>
+        <h2 id="modalTitle">添加海洋生物</h2>
+        <form id="bioForm" onsubmit="handleSubmit(event)">
+            <input type="hidden" id="editId">
+            <input type="text" id="inputName" placeholder="名称" required>
+            <select id="inputPeriod" required>
+                <option value="">选择时期</option>
+                <option value="埃迪卡拉纪">埃迪卡拉纪</option>
+                <option value="寒武纪">寒武纪</option>
+                <option value="奥陶纪">奥陶纪</option>
+                <option value="志留纪">志留纪</option>
+                <option value="泥盆纪">泥盆纪</option>
+                <option value="石炭纪">石炭纪</option>
+                <option value="二叠纪">二叠纪</option>
+                <option value="三叠纪">三叠纪</option>
+                <option value="侏罗纪">侏罗纪</option>
+                <option value="白垩纪">白垩纪</option>
+                <option value="古近纪">古近纪</option>
+                <option value="新近纪">新近纪</option>
+                <option value="第四纪">第四纪</option>
+                <option value="现代">现代</option>
+            </select>
+            <select id="inputHabitat" required>
+                <option value="">选择环境</option>
+                <option value="浅海">浅海</option>
+                <option value="深海">深海</option>
+                <option value="珊瑚礁">珊瑚礁</option>
+                <option value="远洋">远洋</option>
+                <option value="极地海域">极地海域</option>
+                <option value="热带海域">热带海域</option>
+                <option value="温带海域">温带海域</option>
+                <option value="河口">河口</option>
+                <option value="海底热泉">海底热泉</option>
+            </select>
+            <input type="text" id="inputFood" placeholder="食物" required>
+            <input type="text" id="inputPredator" placeholder="天敌" required>
+            <textarea id="inputDesc" placeholder="详细介绍" rows="4" required></textarea>
+            <button type="submit" class="btn-primary" style="width:100%; margin-top:10px;">保存</button>
+        </form>
+    </div>
+</div>
+
+<button class="qa-panel" onclick="toggleQA()">💬</button>
+<div class="qa-box" id="qaBox">
+    <div class="qa-header"><span>智能问答 (基于档案)</span><button onclick="toggleQA()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button></div>
+    <div class="qa-messages" id="qaMessages"><div class="msg bot">你好！我可以根据海洋生物档案回答你的问题，例如“蓝鲸吃什么？”或“介绍珊瑚礁生物”。</div></div>
+    <div class="qa-input">
+        <input id="qaInput" placeholder="输入问题..." onkeydown="if(event.key==='Enter')sendQ()">
+        <button onclick="sendQ()">➤</button>
+    </div>
+</div>
+
+<script>
+    // ---------- 海洋生物档案 ----------
+const defaultCreatures = [
+    { id:1, name:'蓝鲸', period:'现代', habitat:'远洋', food:'磷虾、浮游生物', predator:'虎鲸（偶尔）', desc:`蓝鲸是地球上现存最大的动物，体长可达30米，体重超过180吨。它们属于须鲸，通过鲸须过滤海水中的磷虾为食。蓝鲸分布于全球各大洋，通常在深水区活动。尽管体型庞大，蓝鲸却以微小的磷虾为主食，每天可消耗约4吨磷虾。它们能发出地球上最响亮的声音之一，用于长途通信。目前蓝鲸被列为濒危物种，受到国际法保护。` },
+    { id:2, name:'大白鲨', period:'现代', habitat:'温带海域', food:'鱼类、海豹、海狮', predator:'虎鲸（成年）', desc:`大白鲨是海洋中最著名的顶级掠食者之一，体长可达6米以上。它们拥有极其灵敏的嗅觉，能探测到数公里外的一滴血液。大白鲨的牙齿呈三角形锯齿状，终生不断更换。主要分布于温带和亚热带海域，常在近海大陆架区域活动。尽管电影中常被描绘成凶残的杀手，但实际上大白鲨攻击人类的事件极为罕见。` },
+    { id:3, name:'绿海龟', period:'现代', habitat:'热带海域', food:'海草、藻类', predator:'鲨鱼、虎鲸', desc:`绿海龟是一种广泛分布于热带和亚热带海域的大型海龟，因其体内脂肪呈淡绿色而得名。成年绿海龟体长可达1.5米，体重可达200公斤。它们是草食性海洋爬行动物，主要以海草和藻类为食，在维持海草床生态系统中扮演重要角色。绿海龟具有洄游习性，雌龟会回到出生地的沙滩产卵。由于栖息地破坏和非法捕猎，绿海龟已被列为濒危物种。` },
+    { id:4, name:'章鱼', period:'现代', habitat:'珊瑚礁', food:'螃蟹、虾、贝类', predator:'海豚、鲨鱼', desc:`章鱼是海洋中最聪明的无脊椎动物之一，拥有三颗心脏和蓝色的血液。它们具有惊人的伪装能力，能在瞬间改变皮肤颜色和纹理以融入环境。章鱼拥有八条灵活的触手，每条触手上分布着数百个吸盘。它们善于使用工具，能打开瓶盖获取食物，还会收集椰子壳作为移动庇护所。章鱼主要栖息在珊瑚礁和岩石缝隙中，是夜行性捕食者。` },
+    { id:5, name:'宽吻海豚', period:'现代', habitat:'浅海', food:'鱼类、鱿鱼', predator:'大型鲨鱼', desc:`宽吻海豚是最为人熟知的海豚种类，常出现在海洋公园和电影中。它们体长2-4米，拥有标志性的“微笑”表情。海豚是高度社会化的动物，以复杂的哨声和点击声进行交流，每个个体都有独特的“签名哨声”。它们展现出高度的智能，能使用工具、合作捕猎，甚至能识别镜子中的自己。宽吻海豚广泛分布于全球温带和热带海域。` },
+    { id:6, name:'小丑鱼', period:'现代', habitat:'珊瑚礁', food:'浮游生物、藻类', predator:'大型鱼类', desc:`小丑鱼因电影《海底总动员》而广为人知，它们与海葵形成独特的共生关系。小丑鱼对海葵的触手免疫，在海葵中获得庇护，同时帮助海葵清理寄生虫并增加水流。它们体长通常仅5-11厘米，具有鲜艳的橙白条纹。小丑鱼是群居鱼类，群体中体型最大的个体为雌性，次大的为繁殖雄性。当雌性死亡后，雄性会转变为雌性继续领导群体。` },
+    { id:7, name:'水母', period:'寒武纪', habitat:'远洋', food:'浮游生物、小鱼', predator:'海龟', desc:`水母是地球上最古老的生物之一，已在地球上漂浮了超过5亿年。它们身体含水量高达95%以上，主要由胶状物质构成。水母没有大脑、心脏和骨骼，却拥有复杂的触手系统用于捕食和防御。某些水母的触手含有剧毒，如澳大利亚箱形水母被认为是世界上最毒的生物之一。水母在全球海洋中广泛分布，从表层到深海都能发现它们的身影。` },
+    { id:8, name:'鹦鹉螺', period:'寒武纪', habitat:'深海', food:'小鱼、虾', predator:'大型鱼类', desc:`鹦鹉螺被誉为“活化石”，其形态在数亿年间几乎未发生变化。它们拥有美丽的螺旋形外壳，内部由多个气室组成，通过调节气室内的气体来控制浮力。鹦鹉螺白天栖息在深海，夜间会上浮至浅水区觅食。它们的眼睛构造原始，没有晶体，靠小孔成像原理感知光线。鹦鹉螺现存仅6种，分布于印度洋和太平洋的深水区域，是珍贵的海洋生物遗产。` },
+    { id:9, name:'蝠鲼', period:'现代', habitat:'热带海域', food:'浮游生物、小鱼', predator:'大型鲨鱼', desc:`蝠鲼又称魔鬼鱼，是鳐鱼中体型最大的种类，翼展可达7米以上。它们以优雅的“飞行”姿态在水中游动，扁平的身体和巨大的胸鳍使其成为海洋中最优美的游泳者之一。蝠鲼性格温和，以滤食浮游生物为生。它们拥有鱼类中最大的大脑，表现出复杂的社会行为和好奇心，常主动接近潜水员。蝠鲼主要分布于热带和亚热带海域的珊瑚礁附近。` },
+    { id:10, name:'海马', period:'现代', habitat:'浅海', food:'浮游生物、小型甲壳动物', predator:'螃蟹', desc:`海马因其独特的外形和马头状的头部而得名，是海洋中最独特的鱼类之一。它们游泳时保持直立姿态，靠背鳍快速扇动前进。海马最著名的是其独特的繁殖方式——雄性海马拥有育儿袋，雌性将卵产入雄性育儿袋中，由雄性完成“怀孕”和分娩。海马主要栖息在浅海的藻丛和珊瑚礁区域，用尾巴缠绕在海草上固定身体。由于栖息地破坏和中医药需求，许多海马物种面临威胁。` },
+    { id:11, name:'虎鲸', period:'现代', habitat:'极地海域', food:'海豹、海狮、鱼类', predator:'无', desc:`虎鲸是海洋顶级捕食者，拥有复杂的家族结构和独特的捕猎技巧。它们分布在全球各大洋，从极地到热带海域都能见到。虎鲸以群体合作捕食著称，能猎杀包括大白鲨在内的多种猎物。它们拥有发达的大脑，能够使用方言进行通讯。不同群体的虎鲸有各自的文化传统，包括特定的捕食策略和社交行为。` },
+    { id:12, name:'海獭', period:'现代', habitat:'温带海域', food:'海胆、贝类、螃蟹', predator:'鲨鱼、虎鲸', desc:`海獭是体型最小的海洋哺乳动物，以使用工具而闻名。它们会用石头砸开海胆和贝类的外壳，是极少数会使用工具的海洋动物之一。海獭的皮毛极其浓密，每平方厘米可达10万根毛发，用以在寒冷的海水中保持体温。它们常常仰面漂浮在水面上，将食物放在胸前慢慢享用。海獭是重要的基石物种，通过捕食海胆来维护海藻林的生态平衡。` },
+    { id:13, name:'座头鲸', period:'现代', habitat:'远洋', food:'磷虾、小鱼', predator:'虎鲸', desc:`座头鲸以其壮观的跃身击浪和复杂的歌声而闻名。雄性座头鲸在繁殖季节会唱出长达30分钟的歌曲，歌声可在水下传播数百公里。它们每年迁徙数千公里，从极地觅食区到热带繁殖区。座头鲸的胸鳍极长，可达体长的三分之一，常用胸鳍拍击水面。它们通常单独或小群体活动，但在觅食时可能形成较大的临时群体。` },
+    { id:14, name:'僧帽水母', period:'现代', habitat:'远洋', food:'小鱼、浮游生物', predator:'海龟、翻车鱼', desc:`僧帽水母并非单一生物，而是一个由多个个体组成的管水母群体。其浮囊体漂浮在海面，像一顶僧侣的帽子，触手可达数十米长。触手上的刺细胞含有剧毒，可麻痹甚至杀死小鱼。僧帽水母没有主动游泳能力，全靠风和洋流移动。尽管外表美丽，但被其蛰伤会非常痛苦，甚至危及生命。` },
+    { id:15, name:'海牛', period:'现代', habitat:'浅海', food:'海草、水生植物', predator:'人类、鲨鱼', desc:`海牛是温和的草食性海洋哺乳动物，常被称为“美人鱼”。它们主要生活在温暖浅海和河口地区，以海草为食，每天可吃掉相当于自身体重10%的食物。海牛行动缓慢，通常独居或小家庭活动。由于船只碰撞和栖息地丧失，海牛种群数量大幅下降，被列为易危物种。它们与大象有共同的陆生祖先。` },
+    { id:16, name:'狮子鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、甲壳动物', predator:'几乎没有', desc:`狮子鱼以其华丽的外表和剧毒的鳍刺而著名。原产于印度洋和太平洋，但作为入侵物种已在加勒比海和大西洋大量繁殖。它们的背鳍刺含有神经毒素，对掠食者构成强大威慑。狮子鱼是贪婪的捕食者，吞食大量本地小鱼，对珊瑚礁生态系统造成严重威胁。当地政府鼓励潜水员捕杀狮子鱼以控制其数量。` },
+    { id:17, name:'海胆', period:'奥陶纪', habitat:'珊瑚礁', food:'藻类、海草', predator:'海獭、鱼类', desc:`海胆是古老的棘皮动物，存在历史超过4.5亿年。它们浑身覆盖着可活动的坚硬棘刺，用于防御和移动。海胆的口部位于身体底部，拥有独特的咀嚼结构——亚里士多德提灯。它们是重要的藻类食客，有助于维持珊瑚礁生态平衡。许多海胆的生殖腺被视为美食（海胆黄），因而遭到过度捕捞。` },
+    { id:18, name:'海星', period:'奥陶纪', habitat:'浅海', food:'贝类、珊瑚', predator:'海鸥、水獭', desc:`海星也是古老的棘皮动物，通常具有五条臂，但有些物种可达四十条臂。它们拥有惊人的再生能力，失去的手臂可以重新长出，甚至从切断的手臂再生出整个个体。海星依靠管足移动和捕食，能将胃翻出体外直接消化猎物。它们广泛分布于从潮间带到深海的各种海洋环境中。` },
+    { id:19, name:'海蛇', period:'现代', habitat:'热带海域', food:'鱼类、鳗鱼', predator:'鲨鱼、海鹰', desc:`海蛇是适应海洋生活的有毒爬行动物，与陆地眼镜蛇有亲缘关系。它们具有扁平的尾部，适合游泳，鼻孔有瓣膜可防止海水进入。大多数海蛇毒性剧烈，但通常不主动攻击人类。主要分布在印度洋和太平洋的热带和亚热带水域。海蛇需要浮出水面呼吸，有些物种可以在水下停留数小时。` },
+    { id:20, name:'翻车鱼', period:'现代', habitat:'远洋', food:'水母、浮游生物', predator:'鲨鱼、海狮', desc:`翻车鱼是世界上最重的硬骨鱼，体长可达3米，体重超过2吨。它们的身体呈椭圆形，侧扁，看起来很笨拙。翻车鱼经常侧浮在水面上晒太阳，这也让它们容易成为船只撞击的对象。尽管体型庞大，它们主要以水母等低营养食物为生，需要大量进食以维持体重。` },
+    { id:21, name:'长吻海马', period:'现代', habitat:'浅海', food:'小型甲壳类', predator:'螃蟹', desc:`长吻海马是海马家族中的一员，体型较小，擅长伪装。它们生活在海草床和珊瑚礁中，用尾巴卷住植物以免被水流冲走。雄性长吻海马腹部有一个育儿袋，雌性将卵产入其中，由雄性负责孵育。它们的眼睛可以独立转动，便于寻找猎物。由于传统医药和观赏鱼贸易，野生种群受到一定威胁。` },
+    { id:22, name:'海月水母', period:'寒武纪', habitat:'远洋', food:'浮游生物', predator:'海龟', desc:`海月水母是一种常见的大型水母，透明的伞状体上具有四个明显的环状生殖腺。它们利用触手捕抓浮游生物，然后送到口腕消化。海月水母在世界各地沿海水域都能见到，有时会大量聚集形成“水母潮”。生命周期包括水螅体和水母体两种形态，是研究生物发光和再生的模式生物。` },
+    { id:23, name:'巨型乌贼', period:'现代', habitat:'深海', food:'鱼类、其他乌贼', predator:'抹香鲸', desc:`巨型乌贼是已知最大的无脊椎动物之一，总长可达14米。它们生活在深海约300-1000米，拥有巨大的眼睛，直径可达30厘米，帮助它们在微弱光线下捕食。触腕上具有带齿的吸盘，用于抓住猎物。巨型乌贼与抹香鲸的搏斗是海洋深处的传奇战斗。由于栖息地难以探索，我们对它们的了解仍然有限。` },
+    { id:24, name:'抹香鲸', period:'现代', habitat:'深海', food:'巨型乌贼、章鱼、鱼类', predator:'虎鲸（偶尔）', desc:`抹香鲸是最大的齿鲸，头部占身体长度的三分之一，内含大量鲸脑油。它们能潜入超过2000米的深海捕食巨型乌贼，一次潜水可以持续一个多小时。抹香鲸群体会形成一个“保姆”系统来照顾幼崽。历史上因鲸脑油和龙涎香被大量捕猎，现在受到国际保护但种群恢复缓慢。` },
+    { id:25, name:'海豚鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、甲壳动物', predator:'大型鱼类', desc:`海豚鱼（又称鬼头刀）是一种色彩艳丽的大型鱼类，体长可达2米。它们游速极快，常追逐飞鱼群捕食。身体在出水后颜色会迅速变化，死亡后变为银灰色。海豚鱼肉质鲜美，是重要的经济鱼类。它们倾向于在水面附近活动，常聚集在漂浮物周围。` },
+    { id:26, name:'花园鳗', period:'现代', habitat:'浅海沙地', food:'浮游生物', predator:'大型鱼类', desc:`花园鳗是一种奇特的鳗鱼，身体细长，大部分隐藏在沙子中，只露出上半身随水流摇曳，像海草一样。它们群居在沙地上，形成一片“花园”。一旦受到惊扰，会迅速缩回沙穴中。以浮游生物为食，用嘴捕捉被水流带来的微小生物。分布于热带和温带的浅海沙底区域。` },
+    { id:27, name:'石头鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、虾', predator:'几乎没有', desc:`石头鱼是世界上最毒的鱼类之一，背鳍刺的毒液可引起剧烈疼痛甚至致命。它们具有完美的伪装能力，看起来像一块普通的石头或珊瑚，伏击经过的猎物。主要分布在印度洋和太平洋的热带海域。石头鱼行动缓慢，通常静卧在海底等待猎物靠近。` },
+    { id:28, name:'箱鲀', period:'现代', habitat:'珊瑚礁', food:'藻类、海绵', predator:'大型鱼类', desc:`箱鲀因其身体被坚硬的骨板包裹而得名，像一个小盒子。它们的游动方式特别，通过摆动小小的背鳍和臀鳍前进，看起来非常可爱。当受到威胁时，箱鲀会释放一种毒素，能杀死周围的小型鱼类。它们通常独居，在珊瑚礁中觅食藻类和小型无脊椎动物。` },
+    { id:29, name:'螳螂虾', period:'现代', habitat:'珊瑚礁', food:'螃蟹、贝类', predator:'大型鱼类', desc:`螳螂虾（雀尾螳螂虾）以其强大的攻击力而闻名，其前肢可以像弹簧一样弹出，击碎螃蟹和贝类的外壳。它们拥有动物界中最复杂的眼睛，能感知紫外线和偏振光。螳螂虾色彩艳丽，通常是绿色、蓝色或红色。在洞穴中生活，是凶猛的捕食者。` },
+    { id:30, name:'海葵', period:'现代', habitat:'珊瑚礁', food:'浮游生物、小鱼', predator:'海星、裸鳃类', desc:`海葵是珊瑚的近亲，是一种圆柱形的刺胞动物。它们用基盘附着在岩石或珊瑚上，用带刺细胞的触手捕捉食物。与小丑鱼形成著名的共生关系，小丑鱼为海葵提供食物残渣，海葵保护小丑鱼。海葵可以缓慢移动，如果环境不适，会脱离基盘寻找新地方。` },
+    { id:31, name:'裸鳃类动物', period:'现代', habitat:'珊瑚礁', food:'海绵、海葵', predator:'几乎没有', desc:`裸鳃类动物俗称海蛞蝓，是软体动物中色彩最丰富的类群之一。它们没有壳，裸露的鳃位于身体后部。许多裸鳃类能将猎物的刺细胞或毒素储存到自己体内，用作防御。它们分布在全球海域，从浅海珊瑚礁到深海都有。绚丽的色彩是对掠食者的警告。` },
+    { id:32, name:'海蜘蛛', period:'现代', habitat:'深海', food:'海绵、腔肠动物', predator:'鱼类', desc:`海蜘蛛是一种节肢动物，与陆地上的蜘蛛亲缘关系较远。它们有4-6对长腿，内脏延伸到腿内。海蜘蛛在海洋中分布广泛，从潮间带到超深渊带都有。它们用吸管般的吻吸食海绵或海葵的汁液。深海体型可以很大，腿展可达50厘米。` },
+    { id:33, name:'吸血鬼乌贼', period:'现代', habitat:'深海', food:'海洋雪、浮游生物', predator:'大型鱼类', desc:`吸血鬼乌贼是一种古老的深海头足类，名字意为“来自地狱的乌贼”。它拥有深红色的身体和巨大的蓝眼睛，腕间有皮膜相连。当受到威胁时，它会将腕足翻过来包裹身体，露出尖锐的刺状结构。生活在600-900米深的缺氧层，以海洋雪为食。` },
+    { id:34, name:'水滴鱼', period:'现代', habitat:'深海', food:'甲壳动物', predator:'无', desc:`水滴鱼生活在澳大利亚塔斯马尼亚附近的深海，约600-1200米深。它的身体呈胶状，密度略低于水，因此能在海底上方漂浮而不需耗费能量游泳。由于深海压力巨大，一旦被带到水面，其身体会膨胀变形，呈现出“悲伤”的面孔。水滴鱼被列为“世界最丑动物”。` },
+    { id:35, name:'琵琶鱼', period:'现代', habitat:'深海', food:'小鱼、甲壳动物', predator:'几乎没有', desc:`琵琶鱼（琵琶鱼）以其头部的发光器而闻名，用于在黑暗的深海中引诱猎物。雌性琵琶鱼体型远大于雄性，雄性通常很小，会寄生在雌性身上完成繁殖。它们生活在1000米以上的深海，身体的深色和特殊的发光方式适应了无光环境。` },
+    { id:36, name:'皇带鱼', period:'现代', habitat:'深海', food:'磷虾、小鱼', predator:'大型鱼类', desc:`皇带鱼是世界上最长的硬骨鱼，体长可达11米。它们身体细长，呈银色，背鳍前段有艳丽的红色冠。通常生活在深海200-1000米，极少在浅海出现。它们死亡后被冲上海岸常引发“海蛇”传说。皇带鱼靠波动背鳍缓慢移动，以磷虾和小鱼为食。` },
+    { id:37, name:'海百合', period:'奥陶纪', habitat:'深海', food:'浮游生物', predator:'海胆', desc:`海百合是一种古老的棘皮动物，形态优美似植物。它们用腕上的羽枝过滤浮游生物为食。有些海百合有长柄，固着在海底；有些则自由游动。海百合在古生代非常繁盛，现在多见于深海。它们的化石记录丰富，是地质学的重要标志。` },
+    { id:38, name:'海蛇尾', period:'奥陶纪', habitat:'深海', food:'浮游生物', predator:'海星', desc:`海蛇尾是海星的近亲，拥有细长灵活的腕，可以快速爬行。它们通常隐藏在石缝或沙中，用腕捕食有机碎屑。海蛇尾分布极广，从潮间带到深海都有，是海底生态系统的重要组成。某些种类能生物发光。` },
+    { id:39, name:'南极磷虾', period:'现代', habitat:'极地海域', food:'浮游植物', predator:'鲸、海豹、企鹅', desc:`南极磷虾是南极生态系统的基石物种，生物量估计达5亿吨。它们群集密度极大，每立方米可达数万只。以浮游植物为食，是须鲸、海豹、企鹅等的主要食物来源。南极磷虾能发光，且是可捕捞的重要渔业资源。` },
+    { id:40, name:'独角鲸', period:'现代', habitat:'极地海域', food:'鱼类、鱿鱼', predator:'虎鲸、北极熊', desc:`独角鲸以其雄性上颌长出长达2-3米的螺旋形长牙而闻名。这颗长牙实际上是牙齿，具有感受器，可能用于感知环境。它们生活在北极海域，常在冰缘活动。独角鲸群居，多由雌性和幼崽组成。是北极原住民文化中的重要动物。` },
+    { id:41, name:'白鲸', period:'现代', habitat:'极地海域', food:'鱼类、甲壳动物', predator:'虎鲸', desc:`白鲸全身呈白色，能发出多种声音，被称为“海洋金丝雀”。主要分布在北极和亚北极水域。它们具有灵活的脖子，可以点头和转头。白鲸常聚集在河口和浅湾，蜕皮季节会摩擦河床去除旧皮。因污染和人类活动，部分种群受到威胁。` },
+    { id:42, name:'帝企鹅', period:'现代', habitat:'极地海域', food:'鱼类、磷虾', predator:'豹海豹、虎鲸', desc:`帝企鹅是体型最大的企鹅，身高可达1.2米。它们在南极冬季繁殖，雄企鹅在零下60℃的严寒中孵蛋，期间不吃不喝约60天。帝企鹅是杰出的潜水员，可下潜超过500米。集群生活为它们提供了御寒和防御掠食者的优势。` },
+    { id:43, name:'海象', period:'现代', habitat:'极地海域', food:'蛤蜊、蜗牛', predator:'虎鲸、北极熊', desc:`海象以其巨大的犬齿（长牙）而著称，无论雌雄都有。长牙用于在冰上爬行、挖掘食物和族群内防御。海象主要生活在北极海域，集群在冰上休息。它们用敏感的胡须寻找海底的软体动物。由于全球变暖海冰减少，海象面临栖息地丧失的威胁。` },
+    { id:44, name:'豹海豹', period:'现代', habitat:'极地海域', food:'企鹅、鱼类', predator:'虎鲸', desc:`豹海豹是南极的顶级捕食者之一，体型修长，头部似爬行动物。它们以企鹅和其他海豹为食，有时也捕食磷虾。豹海豹通常独居，善于伏击。它们在南极冰缘活动，是极地生态链中的重要环节。` },
+    { id:45, name:'北极熊', period:'现代', habitat:'极地海域', food:'海豹', predator:'无', desc:`北极熊是最大的陆地食肉动物，但大部分时间在海冰上捕猎。它们主要以环斑海豹为食，依靠灵敏的嗅觉在冰面寻找海豹的呼吸孔。北极熊是优秀的游泳者，能连续游泳数天。由于全球变暖导致海冰减少，北极熊被列为易危物种。` },
+    { id:46, name:'巨骨舌鱼', period:'现代', habitat:'热带海域', food:'浮游生物', predator:'大型鱼类', desc:`巨骨舌鱼（海象鱼）是南美洲亚马逊流域的大型淡水鱼，偶尔进入河口半咸水区域。体长可达3米，体重200公斤。它们用鳔作为肺辅助呼吸，常浮出水面吞气。以小鱼和虾为食，肉质鲜美，是重要的渔业资源。` },
+    { id:47, name:'金枪鱼', period:'现代', habitat:'远洋', food:'鱼类、鱿鱼', predator:'鲨鱼、人类', desc:`金枪鱼是海洋中速度最快的鱼类之一，游速可达70公里/小时。它们体型呈流线型，体温略高于水温。金枪鱼广泛分布于全球温带和热带大洋。蓝鳍金枪鱼因生鱼片市场被过度捕捞，处于严重衰退状态。它们需不断游泳以获取氧气。` },
+    { id:48, name:'剑鱼', period:'现代', habitat:'远洋', food:'鱼类、鱿鱼', predator:'虎鲸、人类', desc:`剑鱼以上颌延长形成的剑状长喙而著名，用于劈砍鱼群。它们游速极快，可达130公里/小时。剑鱼主要分布在全球温带和热带大洋，通常单独活动。肉质鲜美，是重要的捕捞对象。它们的眼睛有特殊的加热器官，提高深海视力。` },
+    { id:49, name:'旗鱼', period:'现代', habitat:'远洋', food:'鱼类、鱿鱼', predator:'鲨鱼', desc:`旗鱼被认为是速度最快的鱼类，游速可达110公里/小时。其背鳍像一面旗子，可竖起或收拢以调节速度。旗鱼用长吻抽打鱼群使其昏迷后捕食。广泛分布于热带和亚热带大洋，是游钓爱好者的最爱。` },
+    { id:50, name:'飞鱼', period:'现代', habitat:'远洋', food:'浮游生物、小鱼', predator:'金枪鱼、海豚', desc:`飞鱼通过极度延长的胸鳍在水面滑翔，以逃避捕食者。它们可跃出水面滑翔数十米甚至上百米。飞鱼集群生活，广泛分布于温带和热带大洋的表层水域。它们是金枪鱼、海豚等的重要食物。` },
+    { id:51, name:'海龙', period:'现代', habitat:'浅海', food:'浮游生物', predator:'鱼类', desc:`海龙与海马是近亲，身体细长，被骨板覆盖。澳洲海龙常被称为“海草龙”，附肢似海草叶，是伪装大师。它们游动缓慢，用透明的尾鳍推进。海龙雄性负责孵育卵，在腹部育儿袋中孵化。分布于澳大利亚南部海域，是当地标志物种。` },
+    { id:52, name:'箱水母', period:'现代', habitat:'浅海', food:'小鱼、甲壳类', predator:'海龟', desc:`箱水母（澳大利亚箱形水母）被认为是世界上最毒的生物之一，其触手毒素可在几分钟内致命。它们主要分布于澳大利亚和东南亚的热带沿海水域。箱水母有较复杂的眼睛，能够躲避物体。夏季繁殖季节对游泳者构成威胁。` },
+    { id:53, name:'蓝环章鱼', period:'现代', habitat:'珊瑚礁', food:'螃蟹、虾', predator:'几乎没有', desc:`蓝环章鱼体型虽小，但毒性极强，一只咬伤可杀死多名成年人。它们身上有鲜明的蓝色环斑，在受激时变得格外明亮。分布于太平洋和印度洋的潮间带至浅海礁石区。蓝环章鱼通常不主动攻击，但被触碰时会噬咬。` },
+    { id:54, name:'刺冠海胆', period:'现代', habitat:'珊瑚礁', food:'藻类', predator:'海獭、炮弹鱼', desc:`刺冠海胆有极长的尖刺，含有毒素，对大堡礁的珊瑚有破坏作用。它们以藻类为食，在珊瑚白化后可能大量繁殖，抑制珊瑚恢复。控制刺冠海胆的数量是珊瑚礁保护的重要措施之一。` },
+    { id:55, name:'海参', period:'现代', habitat:'深海', food:'有机碎屑', predator:'海星、鱼类', desc:`海参是棘皮动物门的一类，身体柔软呈圆筒形。它们在海底缓慢移动，吞食沉积物中的有机碎屑。海参具有特殊的防御机制，受到威胁时会吐出内脏（居维叶氏管）以缠住敌人，内脏可再生。干海参是名贵海味，过度捕捞导致资源下降。` },
+    { id:56, name:'海猪', period:'现代', habitat:'深海', food:'有机碎屑', predator:'深海鱼类', desc:`海猪并非真正的猪，而是一种深海海参，身体圆滚滚的，长有多对管足。它们生活在数千米的深海中，以海底有机碎屑为食。海猪通常集群生活，在海底缓慢爬行。是深海生态底栖生物的重要代表。` },
+    { id:57, name:'管水母', period:'现代', habitat:'远洋', food:'浮游生物、小鱼', predator:'海龟', desc:`管水母是由多个特化个体组成的群体生物，每个个体负责特定功能（如浮囊、泳钟、进食体、生殖体等）。最著名的代表是僧帽水母。它们没有独自生存能力，作为一个整体活动。管水母的刺细胞毒性强烈，有些种类可导致人类死亡。` },
+    { id:58, name:'火体虫', period:'现代', habitat:'远洋', food:'浮游生物', predator:'鱼类', desc:`火体虫是一种巨型被囊动物，呈管状，能发出明亮的蓝绿色光。它们体长可达数米，由无数小个体组成，每个个体分工协作。火体虫用一端进水，经过过滤浮游生物后从另一端排出。主要分布于温暖大洋的中上层水域。` },
+    { id:59, name:'海鞘', period:'现代', habitat:'浅海', food:'浮游生物', predator:'海星、裸鳃类', desc:`海鞘是脊索动物门中的被囊动物，幼体形似蝌蚪，具有脊索，固着后变态失去脊索。成体海鞘通过入水管吸入海水，过滤浮游生物后由出水管排出。它们广泛附着在礁石、船底等硬质表面，有些种类会营群体生活。` },
+    { id:60, name:'海藻', period:'现代', habitat:'浅海', food:'阳光、无机盐', predator:'海胆、鱼类', desc:`海藻是海洋中的初级生产者，包括红藻、褐藻和绿藻等大类。巨藻等褐藻可形成壮观的“海藻林”，为无数海洋生物提供栖息地。海藻是地球上氧气的重要来源之一，固定大量二氧化碳。海藻也直接为人类提供食物、工业原料和肥料。` },
+    { id:61, name:'珊瑚', period:'寒武纪', habitat:'珊瑚礁', food:'浮游生物、共生藻', predator:'海星、鹦鹉鱼', desc:`珊瑚是由珊瑚虫分泌的碳酸钙骨骼形成的动物群落。它们与虫黄藻共生，依赖藻类光合作用提供能量。珊瑚礁是海洋生物多样性最高的生态系统之一，被称为“海洋热带雨林”。全球变暖导致珊瑚白化，对珊瑚礁构成严重威胁。` },
+    { id:62, name:'海笔', period:'现代', habitat:'深海', food:'浮游生物', predator:'海星', desc:`海笔是一种八放珊瑚，形态像一根羽毛笔。它们固着在松软的海底，利用纤毛将浮游生物送入口中。海笔能发出生物光，用于防御或吸引食物。主要分布在温带和热带深海水域。` },
+    { id:63, name:'海扇', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'海星', desc:`海扇（柳珊瑚）是一种弯曲成扇形的八放珊瑚，拥有柔韧的骨骼。它们迎着海流展开，捕捉浮游生物。海扇色彩多样，有红、橙、紫等，是珊瑚礁景观的重要组成。许多小型生物生活在海扇之间。` },
+    { id:64, name:'海葵鱼', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'大型鱼类', desc:`海葵鱼是小丑鱼的一种，与多种海葵共生。它们身上有黏液保护层，不会被海葵蛰伤。海葵鱼吸引其他鱼类靠近海葵，然后将其捕捉。它们是一夫多妻制，雌性体型最大。主要分布在印度洋和太平洋的珊瑚礁区。` },
+    { id:65, name:'蝴蝶鱼', period:'现代', habitat:'珊瑚礁', food:'珊瑚虫、藻类', predator:'大型鱼类', desc:`蝴蝶鱼是珊瑚礁中最美丽的鱼类之一，身体扁平，拥有鲜艳的棋盘状花纹。它们用细长的吻部啄食珊瑚虫或藻类。蝴蝶鱼通常成对活动，具有强烈的领土意识。有许多物种，色彩各异，是潜水者喜爱的观赏对象。` },
+    { id:66, name:'神仙鱼', period:'现代', habitat:'珊瑚礁', food:'海绵、藻类', predator:'大型鱼类', desc:`神仙鱼是色彩华丽的珊瑚礁鱼类，幼鱼和成鱼的花纹截然不同。它们身材高大扁平，游姿飘逸。神仙鱼主要以海绵和海鞘为食，有的也会吃藻类。它们寿命较长，有些个体可活20年以上。分布于全球热带海域。` },
+    { id:67, name:'刺尾鱼', period:'现代', habitat:'珊瑚礁', food:'藻类', predator:'大型鱼类', desc:`刺尾鱼（蓝倒吊）因尾柄上有锋利的倒刺而得名，用于防御。它们成群啃食岩石上的藻类，是珊瑚礁重要的“清洁工”。电影《海底总动员》中的多莉就是刺尾鱼的一种。它们分布广泛，是水族馆的常见鱼种。` },
+    { id:68, name:'扳机鱼', period:'现代', habitat:'珊瑚礁', food:'海胆、甲壳类', predator:'大型鱼类', desc:`扳机鱼以其强壮的颌部和攻击性著称，能咬碎海胆和螃蟹的外壳。它们体形侧扁，像一把扳机。繁殖季节会保卫领地，有时会咬伤靠近的潜水员。分布在全球热带和亚热带海域。` },
+    { id:69, name:'隆头鱼', period:'现代', habitat:'珊瑚礁', food:'甲壳动物、贝类', predator:'鲨鱼', desc:`隆头鱼是一大类珊瑚礁鱼类，许多物种具有性转换现象，雌性能变为雄性。它们拥有强大的牙齿，能粉碎贝类。代表种类有龙头鱼、青色隆头鱼等。与清洁虾一样，有些隆头鱼也会为其他鱼清理寄生虫。` },
+    { id:70, name:'清洁虾', period:'现代', habitat:'珊瑚礁', food:'寄生虫、死皮', predator:'鱼类', desc:`清洁虾以清理大型鱼类身上的寄生虫和坏死组织为生。它们通常设立“清洁站”，摇摆触角吸引顾客。鱼类会张开嘴或鳃盖，允许清洁虾安全进入。这种共生关系对双方都有益。代表种类有红白清洁虾、医生虾。` },
+    { id:71, name:'背棘鱼', period:'现代', habitat:'深海', food:'小型甲壳动物', predator:'无', desc:`背棘鱼是一类深海鱼，身体细长，具有发达的背鳍。它们生活在1000米以下的黑暗中，感觉灵敏。有些种类能够发光。背棘鱼以小鱼和甲壳动物为食，是深海生态的重要组成。` },
+    { id:72, name:'深海蜥蜴鱼', period:'现代', habitat:'深海', food:'甲壳动物、小鱼', predator:'大型鱼类', desc:`深海蜥蜴鱼（深海蜥蜴属）是深海中常见的鱼类，体长可达60厘米。它们栖息在海底，用敏感的触须感知猎物。嘴大，牙齿尖锐，能吞下较大的猎物。分布在全球各大洋的深海平原。` },
+    { id:73, name:'吞噬鳗', period:'现代', habitat:'深海', food:'大鱼、鱿鱼', predator:'无', desc:`吞噬鳗以其巨大的嘴巴而著称，可张开到身体数倍大，吞下比自己还大的猎物。它们身体细长，尾部有发光器。生活在深海约1000米以下，依靠巨嘴和可伸缩的胃捕食。` },
+    { id:74, name:'海跳蚤', period:'现代', habitat:'浅海', food:'有机碎屑', predator:'鱼类', desc:`海跳蚤（端足类）是小型的甲壳动物，常在沙滩跳来跳去。它们是沙滩生态系统的分解者，清理海藻和动物尸体。部分种类是寄生的，附着在鱼类体表。海跳蚤种群数量庞大，是许多水鸟的食物来源。` },
+    { id:75, name:'海虱', period:'现代', habitat:'远洋', food:'鱼血、组织', predator:'鱼类', desc:`海虱是寄生性桡足类动物，附着在鱼体上吸取血液和组织液。它们对养殖鲑鱼危害极大，导致经济损失和生态问题。海虱的生命周期复杂，经历了多个自由游泳阶段。控制海虱是水产养殖的重要课题。` },
+    { id:76, name:'鲸虱', period:'现代', habitat:'远洋', food:'鲸皮、藻类', predator:'无', desc:`鲸虱是端足类甲壳动物，专门寄生在鲸类皮肤表面，以死皮和藻类为食。它们身体扁平，附肢强壮，能牢牢抓住鲸的皮肤。可形成密集群落，尤其在鲸的头部和生殖器周围。` },
+    { id:77, name:'藤壶', period:'现代', habitat:'潮间带', food:'浮游生物', predator:'海星、螺类', desc:`藤壶是附着在岩石、船底甚至鲸体表的甲壳动物。它们有坚硬的石灰质外壳，伸出蔓足滤食浮游生物。藤壶是潮间带常见的固着生物，能耐受干燥和温度变化。船底藤壶增加航行阻力，造成经济负担。` },
+    { id:78, name:'海笋', period:'现代', habitat:'浅海', food:'浮游生物', predator:'海星', desc:`海笋是一种双壳类软体动物，外形像一根细长的笋。它们借助足丝附着在岩石上，外壳表面粗糙。以过滤海水中的浮游生物为食。某些海笋可食用，被视为海鲜美味。` },
+    { id:79, name:'砗磲', period:'现代', habitat:'珊瑚礁', food:'浮游生物、共生藻', predator:'海星、人类', desc:`砗磲是最大的双壳类软体动物，壳长可达1.2米，重200公斤。它们与虫黄藻共生，白天打开贝壳让藻类进行光合作用。砗磲多见于热带珊瑚礁，寿命可超过100年。由于过度捕捞和栖息地破坏，许多砗磲种类被列为易危或濒危。` },
+    { id:80, name:'海兔', period:'现代', habitat:'珊瑚礁', food:'海绵、海藻', predator:'几乎没有', desc:`海兔是裸鳃类动物中的一类，形态多样，色彩缤纷。它们能从食物中提取毒素，并储存在体表用于防御。海兔雌雄同体，交配时互为配偶。在繁殖季节可见大量海兔聚集。是水肺潜水爱好者喜欢的拍摄对象。` },
+    { id:81, name:'海羽星', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'鱼类', desc:`海羽星是海百合的一种，可以自由游动，用多只臂膀划水。它们用羽状腕捕捉浮游生物。色彩鲜艳，通常隐藏在礁石缝隙中。分布于热带和温带浅海，是珊瑚礁生物多样性的一部分。` },
+    { id:82, name:'饼干海胆', period:'现代', habitat:'浅海', food:'藻类', predator:'海獭', desc:`饼干海胆身体扁平如饼干，刺短而密。它们常用刺和管足将自己埋入沙子中，以免被海浪冲走。饼干海胆成群生活在沙底，是重要的沉积物扰动者。在某些地区被视为美食。` },
+    { id:83, name:'海苹果', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'几乎没有', desc:`海苹果是一种色彩鲜艳的海参，身体球形，触手环绕口部张开如花朵。它们用触手粘捕浮游生物送入口中。当受到威胁时，海苹果会释放毒素，有时会导致水族箱中其他生物死亡。主要分布在红海至东南亚海域。` },
+    { id:84, name:'海葵虾', period:'现代', habitat:'珊瑚礁', food:'寄生虫、食物残渣', predator:'鱼类', desc:`海葵虾与海葵形成共生关系，生活于海葵触手间，清除海葵体表的寄生虫并获得庇护。它们通常成对居住在一个海葵中。体色透明或鲜艳，常见于热带珊瑚礁。` },
+    { id:85, name:'圆鳍鱼', period:'现代', habitat:'浅海', food:'小鱼、甲壳动物', predator:'海鸟', desc:`圆鳍鱼身体圆胖，鱼鳍像腿，能在海底爬行。它们常用于产卵于浅水区，雄鱼守护卵直到孵化。圆鳍鱼分布于北半球冷温带水域。有些种类被作为观赏鱼养殖。` },
+    { id:86, name:'叶形海龙', period:'现代', habitat:'浅海', food:'浮游生物', predator:'鱼类', desc:`叶形海龙是南澳大利亚的特有物种，全身布满叶状附肢，完美模仿海草。它们游动缓慢，靠透明的背鳍和胸鳍移动。雄性在腹部育儿袋中孵育卵。叶形海龙是海洋生物保护的标志性物种。` },
+    { id:87, name:'儒艮', period:'现代', habitat:'浅海', food:'海草', predator:'鲨鱼、人类', desc:`儒艮是海牛目的一种草食性海洋哺乳动物，与海牛相似但尾部不同。它们生活在印度洋和太平洋的热带浅海，以海草为食。儒艮因为传统医学和食物被大量猎杀，现为易危物种。传说中美人鱼的原型可能来自儒艮。` },
+    { id:88, name:'加州海狮', period:'现代', habitat:'温带海域', food:'鱼类、鱿鱼', predator:'虎鲸、鲨鱼', desc:`加州海狮聪明灵活，常被训练表演。雄性有突出的头冠，体长可达2.4米。它们集群繁殖，雄性有强烈的领域性。分布于太平洋沿岸，是海洋生态系统的关键物种。` },
+    { id:89, name:'环斑海豹', period:'现代', habitat:'极地海域', food:'鱼类、甲壳动物', predator:'北极熊、虎鲸', desc:`环斑海豹是最小的海豹，在冰上挖掘呼吸孔，是北极熊的主要猎物。它们广泛分布于北极海域，以鱼类和甲壳动物为食。环斑海豹皮毛上有独特的环形斑纹。` },
+    { id:90, name:'海鹦', period:'现代', habitat:'温带海域', food:'鱼类', predator:'海鸥、狐狸', desc:`海鹦是一种长相可爱的海鸟，嘴巴色彩鲜艳，像小丑。它们翼短，擅长游泳潜水，用翅膀在水中飞行追捕小鱼。繁殖时在悬崖挖洞筑巢。主要分布在北大西洋。` },
+    { id:91, name:'塘鹅', period:'现代', habitat:'温带海域', food:'鱼类', predator:'鲨鱼、海豹', desc:`塘鹅是大型海鸟，翼展可达2米。它们从高空俯冲入水捕鱼，冲击力极大，皮肤下有气囊保护。塘鹅集群繁殖，鸟巢密集覆盖海岛。分布于北大西洋和南半球温带海域。` },
+    { id:92, name:'漂泊信天翁', period:'现代', habitat:'远洋', food:'鱼类、鱿鱼', predator:'几乎没有', desc:`漂泊信天翁是世界上翼展最大的鸟类，翼展可达3.5米。它们利用风力在海上滑翔数日甚至数月不落地。信天翁一生大部分时间在海上度过，只有繁殖时回到偏远岛屿。由于延绳钓误捕，许多信天翁物种面临威胁。` },
+    { id:93, name:'真海豚', period:'现代', habitat:'浅海', food:'鱼类、鱿鱼', predator:'鲨鱼', desc:`真海豚是流线型的小型海豚，体长2-2.5米，常大规模集群活动。它们以高速游动和频繁跃出水面的行为著称。分布于全球温带和热带海域，常跟随船只。因渔业和污染，部分种群数量下降。` },
+    { id:94, name:'鼠海豚', period:'现代', habitat:'浅海', food:'小鱼、鱿鱼', predator:'鲨鱼', desc:`鼠海豚是体型较小的齿鲸，背鳍三角形，吻部短。它们通常害羞，不常跳跃。分布于北半球温带和极地海域。鼠海豚常被渔网误捕，一些种群数量急剧下降，例如加利福尼亚湾鼠海豚目前极度濒危。` },
+    { id:95, name:'长江江豚', period:'现代', habitat:'河口', food:'小鱼、虾', predator:'鲨鱼', desc:`长江江豚是生活在长江中下游的淡水齿鲸，因其“微笑”面孔而受喜爱。它们没有背鳍，仅有一个小隆起。长江江豚对淡水环境的适应能力较强，是长江生态系统的旗舰物种。目前长江江豚极度濒危，数量仅剩千余头。` },
+    { id:96, name:'中华白海豚', period:'现代', habitat:'河口', food:'鱼类', predator:'鲨鱼', desc:`中华白海豚因幼年灰色成年粉白色而得名，是河口和近海的标志物种。它们主要分布于中国南方沿海，尤其是珠江口。由于填海、污染和船只交通，中华白海豚栖息地破碎化严重，种群数量持续下降。` },
+    { id:97, name:'长江鲟', period:'现代', habitat:'河口', food:'小鱼、甲壳类', predator:'人类', desc:`长江鲟是长江中下游的洄游性鱼类，体型巨大，可长达5米。它们在淡水出生，到海洋生长，再洄游到长江上游产卵。由于大坝建设和过度捕捞，长江鲟野外几乎灭绝，被列为极危物种。` },
+    { id:98, name:'日本海马', period:'现代', habitat:'浅海', food:'浮游动物', predator:'螃蟹', desc:`日本海马体型小，体长仅5-10厘米，常生活于海草床和藻丛中。它们用尾巴缠绕植物固定身体，捕食小型浮游动物。雄性海马腹部有育儿袋，负责孵育后代。由于栖息地退化和过度采集，日本海马被认定为易危物种。` },
+    { id:99, name:'澳洲海龙', period:'现代', habitat:'浅海', food:'浮游动物', predator:'鱼类', desc:`澳洲海龙（韦氏海龙）与叶形海龙相似，但附肢更简单。它们生活在南澳大利亚的海草床和岩礁区。雄性在尾部育儿袋中孵卵。由于开发和水质污染，澳洲海龙被列为近危物种。` },
+    { id:100, name:'海葵蟹', period:'现代', habitat:'珊瑚礁', food:'浮游生物、碎屑', predator:'鱼类', desc:`海葵蟹与海葵形成共生关系，小型海葵附着在蟹壳上，为蟹提供伪装和防御，蟹则带着海葵移动扩大觅食范围。海葵蟹通常生活在热带珊瑚礁的浅水区。它们行动缓慢，依靠海葵的毒性来保护自己。` },
+    { id:101, name:'黑鲸', period:'现代', habitat:'远洋', food:'鱼类、鱿鱼', predator:'虎鲸', desc:`黑鲸是大型齿鲸，体长可达5米，以合作捕猎闻名。分布于世界各大洋，常形成数十头的群体。它们能够发出多种声音进行交流，是智商最高的海洋动物之一。` },
+    { id:102, name:'独角鲸', period:'现代', habitat:'极地海域', food:'鱼类、鱿鱼', predator:'虎鲸、北极熊', desc:`独角鲸雄性上颌长有长达3米螺旋状长牙，用于感官探测和社交。生活于北极海域，潜水深度可达1500米。它们是北极原住民文化中的重要图腾。` },
+    { id:103, name:'白鲸', period:'现代', habitat:'极地海域', food:'鱼类、甲壳动物', predator:'虎鲸', desc:`白鲸全身呈白色，能发出多种声音，被称为“海洋金丝雀”。主要分布在北极和亚北极水域。它们具有灵活的脖子，可以点头和转头。` },
+    { id:104, name:'短吻海豚', period:'现代', habitat:'浅海', food:'小鱼、鱿鱼', predator:'鲨鱼', desc:`短吻海豚体型较小，吻部较短，常活跃于沿海浅水域。具有复杂的社群结构，通常10-30头一起活动。` },
+    { id:105, name:'长须鲸', period:'现代', habitat:'远洋', food:'磷虾、小鱼', predator:'虎鲸', desc:`长须鲸是仅次于蓝鲸的第二大动物，体长可达27米。游速极快，被称为“海洋灰犬”。它们通常单独或成对活动。` },
+    { id:106, name:'塞鲸', period:'现代', habitat:'远洋', food:'磷虾', predator:'虎鲸', desc:`塞鲸体长可达20米，背部深灰，腹部白色。常单独或小群活动，分布于全球温带和极地海域。它们是快速游动的须鲸。` },
+    { id:107, name:'小须鲸', period:'现代', habitat:'温带海域', food:'磷虾、小鱼', predator:'虎鲸', desc:`小须鲸是体型最小的须鲸，体长约10米。常靠近海岸，是观鲸常见种类。它们好奇心强，有时会接近船只。` },
+    { id:108, name:'灰鲸', period:'现代', habitat:'浅海', food:'片脚类、多毛类', predator:'虎鲸', desc:`灰鲸每年长途迁徙1.5万公里，在北极觅食，在墨西哥湾繁殖。以其底部滤食行为著称，是迁徙距离最长的哺乳动物之一。` },
+    { id:109, name:'布氏鲸', period:'现代', habitat:'热带海域', food:'小鱼、鱿鱼', predator:'虎鲸', desc:`布氏鲸体长可达15米，分布于热带和亚热带海域，经常出现在深海与近海交汇区。它们通常单独或成对活动。` },
+    { id:110, name:'小布氏鲸', period:'现代', habitat:'热带海域', food:'小鱼', predator:'虎鲸', desc:`小布氏鲸体型比布氏鲸稍小，主要生活在近海，以鳀鱼等集群鱼类为食。它们常见于东南亚和澳大利亚北部海域。` },
+    { id:111, name:'南露脊鲸', period:'现代', habitat:'极地海域', food:'磷虾', predator:'虎鲸', desc:`南露脊鲸体长可达18米，头部有角质瘤，游泳缓慢，曾因捕鲸几乎灭绝。它们性情温和，常靠近海岸。` },
+    { id:112, name:'北露脊鲸', period:'现代', habitat:'温带海域', food:'磷虾', predator:'虎鲸', desc:`北大西洋露脊鲸是最濒危的鲸类之一，数量不足400头，受船只碰撞和渔具缠绕威胁。它们移动缓慢，常停留在近海面。` },
+    { id:113, name:'侏儒蓝鲸', period:'现代', habitat:'热带海域', food:'磷虾', predator:'虎鲸', desc:`侏儒蓝鲸是蓝鲸的一个亚种，体型略小，分布于印度洋和南太平洋热带水域。它们通常不进行长距离迁徙。` },
+    { id:114, name:'抹香鲸', period:'现代', habitat:'深海', food:'巨型乌贼、章鱼', predator:'虎鲸（偶尔）', desc:`抹香鲸是最大的齿鲸，能潜入2000米深海捕食。其头部含大量鲸脑油，曾为捕鲸主要目标。它们是海洋生态系统的顶级捕食者。` },
+    { id:115, name:'柯氏喙鲸', period:'现代', habitat:'深海', food:'乌贼', predator:'虎鲸', desc:`柯氏喙鲸是小型喙鲸，体长仅5-6米，生活在深海，极少被观察。它们以乌贼为主食，能长时间潜水。` },
+    { id:116, name:'拉普拉塔河豚', period:'现代', habitat:'河口', food:'小鱼', predator:'鲨鱼', desc:`拉普拉塔河豚是最小的海豚之一，生活在南美洲东南沿海及河口，面临渔网误捕威胁。它们通常单独或成对活动。` },
+    { id:117, name:'亚马逊河豚', period:'现代', habitat:'河口', food:'鱼、蟹', predator:'人类', desc:`亚马逊河豚（粉红河豚）生活在亚马逊河系统，体色粉红，具有灵活的脖子。它们是淡水豚中体型最大的。` },
+    { id:118, name:'恒河豚', period:'现代', habitat:'河口', food:'鱼、虾', predator:'人类', desc:`恒河豚视力几乎为零，依靠回声定位在浑浊河水中捕食。分布于印度和孟加拉国的恒河及雅鲁藏布江水系，极度濒危。` },
+    { id:119, name:'南极型虎鲸', period:'现代', habitat:'极地海域', food:'海豹、企鹅', predator:'无', desc:`南极型虎鲸特化捕食海豹和企鹅，常协作制造波浪冲刷浮冰上的猎物。它们是虎鲸的一个生态型。` },
+    { id:120, name:'大翅鲸', period:'现代', habitat:'远洋', food:'磷虾、小鱼', predator:'虎鲸', desc:`大翅鲸（座头鲸）以其跃身击浪和复杂歌声闻名。胸鳍极长，可达体长1/3。它们是观鲸旅游的主要对象。` },
+    { id:121, name:'海象', period:'现代', habitat:'极地海域', food:'贝类', predator:'虎鲸、北极熊', desc:`海象拥有长牙和胡须，用于在海底挖掘贝类。常聚集在浮冰上休息。它们对北极原住民文化具有重要意义。` },
+    { id:122, name:'加州海狮', period:'现代', habitat:'温带海域', food:'鱼、鱿鱼', predator:'虎鲸、鲨鱼', desc:`加州海狮聪明灵活，常被训练表演。雄性有突出的头冠，体长可达2.4米。它们是海洋哺乳动物中的明星。` },
+    { id:123, name:'北海狮', period:'现代', habitat:'温带海域', food:'鱼、鱿鱼', predator:'虎鲸', desc:`北海狮（斯特勒海狮）是最大的海狮，雄性体重可达1吨。分布于北太平洋沿岸，是重要的顶级捕食者。` },
+    { id:124, name:'海獭', period:'现代', habitat:'温带海域', food:'海胆、蟹、贝', predator:'鲨鱼、虎鲸', desc:`海獭用石头砸开食物，是最会使用工具的海洋哺乳动物之一。皮毛极密以保暖。它们是海藻林生态的关键物种。` },
+    { id:125, name:'海牛', period:'现代', habitat:'浅海', food:'海草', predator:'人类、鲨鱼', desc:`海牛是温和的草食性哺乳动物，每天吃大量海草。分布于大西洋热带和亚热带沿海。它们与大象有共同祖先。` },
+    { id:126, name:'儒艮', period:'现代', habitat:'浅海', food:'海草', predator:'人类、鲨鱼', desc:`儒艮与海牛相似，但尾鳍呈V形。生活在印度洋和太平洋浅水区，是美人鱼传说的来源之一。它们因栖息地破坏而濒危。` },
+    { id:127, name:'冠海豹', period:'现代', habitat:'极地海域', food:'鱼、鱿鱼', predator:'虎鲸、北极熊', desc:`冠海豹雄性有可膨胀的鼻囊，形成红色气球状，用于求偶展示。它们主要分布在大西洋北极水域。` },
+    { id:128, name:'环斑海豹', period:'现代', habitat:'极地海域', food:'鱼、甲壳动物', predator:'北极熊、虎鲸', desc:`环斑海豹是最小的海豹，在冰上挖掘呼吸孔，是北极熊的主要猎物。它们分布在整个北极圈。` },
+    { id:129, name:'象海豹', period:'现代', habitat:'极地海域', food:'鱼、鱿鱼', predator:'虎鲸、大白鲨', desc:`象海豹雄性有巨大的鼻子，体长可达6米，体重4吨。能深潜超过1500米。它们是鳍足类中体型最大的。` },
+    { id:130, name:'韦德尔氏海豹', period:'现代', habitat:'极地海域', food:'鱼、鱿鱼', predator:'虎鲸、豹海豹', desc:`韦德尔氏海豹是南极最常见的海豹，能用牙齿啃开冰面保持呼吸孔。它们能潜水超过80分钟。` },
+    { id:131, name:'帝企鹅', period:'现代', habitat:'极地海域', food:'鱼、磷虾', predator:'豹海豹、虎鲸', desc:`帝企鹅身高1.2米，在南极冬季繁殖，雄企鹅孵蛋60天禁食。它们是唯一在南极冬季繁殖的企鹅。` },
+    { id:132, name:'阿德利企鹅', period:'现代', habitat:'极地海域', food:'磷虾', predator:'豹海豹', desc:`阿德利企鹅体型较小，以磷虾为食，是南极最普遍的企鹅。它们需要无冰区繁殖。` },
+    { id:133, name:'巴布亚企鹅', period:'现代', habitat:'极地海域', food:'磷虾、小鱼', predator:'海豹', desc:`巴布亚企鹅游泳速度最快，可达36公里/小时。眼睛上方有白色斑纹。它们分布在南极半岛和亚南极岛屿。` },
+    { id:134, name:'马可罗尼企鹅', period:'现代', habitat:'极地海域', food:'磷虾', predator:'海豹', desc:`马可罗尼企鹅头顶有金黄色羽毛，是数量最多的企鹅种类之一。它们分布于亚南极地区和南极半岛。` },
+    { id:135, name:'王企鹅', period:'现代', habitat:'极地海域', food:'鱼、鱿鱼', predator:'海豹', desc:`王企鹅体型仅次于帝企鹅，颈侧有鲜艳橙色羽毛。分布于亚南极岛屿。它们需要14-16个月来养育一只幼鸟。` },
+    { id:136, name:'加拉帕戈斯企鹅', period:'现代', habitat:'热带海域', food:'小鱼', predator:'鲨鱼', desc:`加拉帕戈斯企鹅是唯一生活在赤道附近的企鹅，体型小，受气候变化影响严重。它们依靠克伦威尔洋流带来的冷水生存。` },
+    { id:137, name:'漂泊信天翁', period:'现代', habitat:'远洋', food:'鱼、鱿鱼', predator:'无', desc:`漂泊信天翁翼展可达3.5米，能滑翔数小时不拍翅，一生大部分时间在海上飞行。它们繁殖于亚南极岛屿。` },
+    { id:138, name:'蓝脚鲣鸟', period:'现代', habitat:'热带海域', food:'小鱼', predator:'无', desc:`蓝脚鲣鸟以亮蓝色脚掌闻名，用于求偶炫耀。从高空俯冲捕鱼。主要分布在东太平洋的加拉帕戈斯等地。` },
+    { id:139, name:'海鹦', period:'现代', habitat:'温带海域', food:'鱼', predator:'海鸥', desc:`海鹦嘴巴大而彩色，能在一次潜水中捕捉多条鱼。在悬崖挖洞筑巢。它们主要分布在北大西洋。` },
+    { id:140, name:'鸬鹚', period:'现代', habitat:'浅海', food:'鱼', predator:'无', desc:`鸬鹚擅长潜水捕鱼，常在中国和日本被训练用于渔业。它们有可分泌防水油的尾脂腺。` },
+    { id:141, name:'蓝鳍金枪鱼', period:'现代', habitat:'远洋', food:'鱼、鱿鱼', predator:'鲨鱼、人类', desc:`蓝鳍金枪鱼是最大的金枪鱼，体长可达4米，重600公斤。游速快，体温略高于水温。因过度捕捞濒危。` },
+    { id:142, name:'剑鱼', period:'现代', habitat:'远洋', food:'鱼、鱿鱼', predator:'虎鲸、人类', desc:`剑鱼上颌延长为剑状，用于切割猎物。是所有鱼类中游速最快的之一，可达130公里/小时。` },
+    { id:143, name:'旗鱼', period:'现代', habitat:'远洋', food:'鱼', predator:'鲨鱼', desc:`旗鱼背鳍高大如旗，游速可达110公里/小时，是海洋短跑冠军。它们用长吻击昏猎物。` },
+    { id:144, name:'鲣鱼', period:'现代', habitat:'远洋', food:'小鱼', predator:'金枪鱼', desc:`鲣鱼是金枪鱼的一种，体型较小，集群活动，是重要的经济鱼类。它们常与海鸟群一起捕食。` },
+    { id:145, name:'鬼头刀', period:'现代', habitat:'远洋', food:'飞鱼', predator:'鲨鱼', desc:`鬼头刀（鲯鳅）色彩艳丽，游速快，常在漂浮物下聚集。死亡后颜色变为灰白。它们是游钓的常见目标。` },
+    { id:146, name:'大梭鱼', period:'现代', habitat:'热带海域', food:'鱼', predator:'鲨鱼', desc:`大梭鱼身体细长，牙齿锋利，常在珊瑚礁和红树林水域潜伏攻击。它们可长到2米长。` },
+    { id:147, name:'海鲢', period:'现代', habitat:'浅海', food:'小鱼', predator:'鲨鱼', desc:`海鲢是古老的鱼类，有修长的身体，常见于热带和亚热带沿海。它们能耐受低盐度水。` },
+    { id:148, name:'长吻鱼', period:'现代', habitat:'深海', food:'甲壳动物', predator:'大型鱼类', desc:`长吻鱼吻部极长，像一根管子，用于探入沙中寻找食物。生活在深海底层，分布在全球各大洋。` },
+    { id:149, name:'鲂鮄', period:'现代', habitat:'深海', food:'蠕虫、甲壳动物', predator:'大型鱼类', desc:`鲂鮄胸鳍下部有游离的鳍条，像腿一样在海底行走，寻找食物。它们能发出咕噜声交流。` },
+    { id:150, name:'吞噬鳗', period:'现代', habitat:'深海', food:'大鱼、鱿鱼', predator:'无', desc:`吞噬鳗大嘴可扩张，吞下比自己还大的猎物。尾部有发光器，生活在深海。它们偶尔被深海拖网捕获。` },
+    { id:151, name:'深海鮟鱇', period:'现代', habitat:'深海', food:'小鱼、甲壳动物', predator:'无', desc:`深海鮟鱇头顶有发光诱饵，雌性体型远大于雄性，雄性会寄生在雌性身上。它们是深海的标志性物种。` },
+    { id:152, name:'灯笼鱼', period:'现代', habitat:'深海', food:'浮游生物', predator:'鲸、金枪鱼', desc:`灯笼鱼是深海中层数量最多的鱼，体侧有发光器，每晚垂直迁移到浅水觅食。它们是海洋食物网的关键。` },
+    { id:153, name:'斧头鱼', period:'现代', habitat:'深海', food:'浮游生物', predator:'大型鱼类', desc:`斧头鱼身体侧面极扁，像斧头，眼睛向上，用于探测上方猎物。它们生活在中层带。` },
+    { id:154, name:'蝰鱼', period:'现代', habitat:'深海', food:'鱼', predator:'无', desc:`蝰鱼有针状牙齿和发光器官，嘴可极度张开捕食，常见于500-2000米深海。它们是凶猛的伏击捕食者。` },
+    { id:155, name:'大肚海马', period:'现代', habitat:'浅海', food:'浮游动物', predator:'螃蟹', desc:`大肚海马腹部特别膨大，是海马中体型较大的种类。雄性有育儿袋。它们主要分布在澳大利亚和新西兰海域。` },
+    { id:156, name:'叶形海龙', period:'现代', habitat:'浅海', food:'浮游动物', predator:'鱼类', desc:`叶形海龙全身遍布叶状附肢，完美模仿海草，是澳大利亚南部特有物种。它们是水肺潜水热门观察对象。` },
+    { id:157, name:'管口鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、虾', predator:'大型鱼类', desc:`管口鱼身体细长，口呈管状，常头朝下垂直游泳，模仿珊瑚或海草晃动。它们以突然吸入的方式捕食。` },
+    { id:158, name:'炮弹鱼', period:'现代', habitat:'珊瑚礁', food:'海胆、螃蟹', predator:'大型鱼类', desc:`炮弹鱼有强壮的颌部，能咬碎海胆和贝壳，领地性极强。繁殖期会攻击入侵者。` },
+    { id:159, name:'扳机鱼', period:'现代', habitat:'珊瑚礁', food:'甲壳动物', predator:'大型鱼类', desc:`扳机鱼用背鳍棘锁定在岩石缝中防御，食物包括螃蟹、海胆。它们因扳机状的背鳍而得名。` },
+    { id:160, name:'鹦鹉鱼', period:'现代', habitat:'珊瑚礁', food:'藻类、珊瑚', predator:'大型鱼类', desc:`鹦鹉鱼用喙状牙齿刮食珊瑚和藻类，排出的珊瑚沙是沙滩的主要来源。它们夜间会分泌黏液茧包裹自己。` },
+    { id:161, name:'裂唇鱼', period:'现代', habitat:'珊瑚礁', food:'寄生虫', predator:'几乎无', desc:`裂唇鱼是著名的清洁鱼，会清理大鱼身上的寄生虫和死皮，形成清洁站共生关系。它们有蓝黄相间的体色。` },
+    { id:162, name:'蝴蝶鱼', period:'现代', habitat:'珊瑚礁', food:'珊瑚虫、藻类', predator:'大型鱼类', desc:`蝴蝶鱼体色鲜艳，身体侧扁，通常成对活动，用细长嘴啄食。它们是珊瑚礁健康状况的指示物种。` },
+    { id:163, name:'神仙鱼', period:'现代', habitat:'珊瑚礁', food:'海绵、藻类', predator:'大型鱼类', desc:`神仙鱼体形高大侧扁，幼体和成体颜色图案完全不同。它们通常有领地性，独居或成对。` },
+    { id:164, name:'小丑鱼', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'大型鱼类', desc:`小丑鱼与海葵共生，体表有黏液免疫海葵毒素。群体中雌性最大，雄性可变性。它们深受潜水员喜爱。` },
+    { id:165, name:'狮子鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼', predator:'几乎没有', desc:`狮子鱼拥有剧毒鳍刺，原产印度洋-太平洋，现已成为加勒比海的入侵物种。它们对本地生态造成严重破坏。` },
+    { id:166, name:'石头鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、虾', predator:'几乎没有', desc:`石头鱼伪装成石头，背鳍毒液是鱼类中最毒的之一，可致人类死亡。它们潜伏在海底等待猎物。` },
+    { id:167, name:'粒突箱鲀', period:'现代', habitat:'珊瑚礁', food:'藻类、海绵', predator:'大型鱼类', desc:`粒突箱鲀身体被骨板包裹，游动笨拙但能释放毒素杀死周围小鱼。它们因可爱的外形而常被水族馆饲养。` },
+    { id:168, name:'海鳝', period:'现代', habitat:'珊瑚礁', food:'鱼、章鱼', predator:'大型鱼类', desc:`海鳝身体细长，隐藏在礁缝中，常与清洁虾共生，张开嘴让虾清理口腔。它们有锋利的牙齿。` },
+    { id:169, name:'西班牙舞者', period:'现代', habitat:'珊瑚礁', food:'海绵', predator:'几乎没有', desc:`西班牙舞者是大型裸鳃类，体长达40厘米，游动时像旋转的舞裙。它们分布于红海和印度洋。` },
+    { id:170, name:'砗磲', period:'现代', habitat:'珊瑚礁', food:'浮游生物、共生藻', predator:'海星、人类', desc:`砗磲是最大的双壳贝类，壳长可达1.2米，重量超过200公斤，寿命超100岁。它们与虫黄藻共生。` },
+    { id:171, name:'鹦鹉螺', period:'寒武纪', habitat:'深海', food:'小鱼、虾', predator:'章鱼', desc:`鹦鹉螺是活化石，螺旋形外壳分为多个气室，调节浮力上升下降。它们夜间会游到浅水觅食。` },
+    { id:172, name:'绿海龟', period:'现代', habitat:'热带海域', food:'海草', predator:'鲨鱼', desc:`绿海龟是大型海龟，脂肪呈绿色，以海草为食，有助于维持海草床生态。它们每年回到出生地产卵。` },
+    { id:173, name:'玳瑁', period:'现代', habitat:'珊瑚礁', food:'海绵', predator:'鲨鱼', desc:`玳瑁嘴如鹰喙，主要吃海绵，其龟壳曾被广泛用于制作饰品，现濒危。它们是珊瑚礁生态的重要成员。` },
+    { id:174, name:'棱皮龟', period:'现代', habitat:'远洋', food:'水母', predator:'虎鲸', desc:`棱皮龟是最大的海龟，背甲呈革质而非硬壳，擅长深潜，以水母为主食。它们能耐受低温。` },
+    { id:175, name:'橄榄蠵龟', period:'现代', habitat:'远洋', food:'鱼、虾', predator:'鲨鱼', desc:`橄榄蠵龟是体型最小的海龟之一，以大规模同步产卵（arribada）闻名。它们分布于热带海域。` },
+    { id:176, name:'黄唇海蛇', period:'现代', habitat:'热带海域', food:'鱼', predator:'鲨鱼', desc:`黄唇海蛇有扁平尾部，潜水能力强，毒液剧烈，但一般不主动攻击人类。它们分布于东南亚沿海。` },
+    { id:177, name:'海鬣蜥', period:'现代', habitat:'热带海域', food:'藻类', predator:'蛇、猛禽', desc:`海鬣蜥是唯一生活在海洋中的蜥蜴，仅见于加拉帕戈斯，能潜水采食海藻。它们能排出多余盐分。` },
+    { id:178, name:'咸水鳄', period:'现代', habitat:'河口', food:'鱼、哺乳动物', predator:'无', desc:`咸水鳄是现存最大的爬行动物，体长可达7米，可在海洋中长途漂流。它们是顶级掠食者。` },
+    { id:179, name:'巨型乌贼', period:'现代', habitat:'深海', food:'鱼、乌贼', predator:'抹香鲸', desc:`巨型乌贼是最大的无脊椎动物之一，眼睛直径30厘米，触手有带齿吸盘。它们与抹香鲸的搏斗是著名传说。` },
+    { id:180, name:'大王乌贼', period:'现代', habitat:'深海', food:'鱼、乌贼', predator:'抹香鲸', desc:`大王乌贼体长可达14米，触腕极长，是海洋传说中的克拉肯原型。它们生活在中深层水域。` },
+    { id:181, name:'吸血鬼乌贼', period:'现代', habitat:'深海', food:'海洋雪', predator:'大型鱼类', desc:`吸血鬼乌贼生活在缺氧深水，腕间有伞状皮膜，眼睛鲜红，并非吸血。它们以海洋雪为食。` },
+    { id:182, name:'海兔', period:'现代', habitat:'珊瑚礁', food:'海绵、海藻', predator:'几乎没有', desc:`海兔色彩艳丽，许多种类能储存从食物中获得的毒素用于防御。它们是裸鳃类的代表。` },
+    { id:183, name:'刺冠海胆', period:'现代', habitat:'珊瑚礁', food:'藻类', predator:'海獭、炮弹鱼', desc:`刺冠海胆有极长的尖刺，含有毒素，对大堡礁的珊瑚有破坏作用。它们爆发时会啃食大量珊瑚藻。` },
+    { id:184, name:'向日葵海星', period:'现代', habitat:'浅海', food:'贝类、海胆', predator:'海鸥', desc:`向日葵海星可以有多达24条腕，直径可达1米，是海底的快速捕食者。它们分布于北太平洋。` },
+    { id:185, name:'黑海参', period:'现代', habitat:'深海', food:'有机碎屑', predator:'海星', desc:`黑海参在海底吞食沉积物，过滤有机质，是深海生态系统的循环者。它们常被加工成食用海参。` },
+    { id:186, name:'南极磷虾', period:'现代', habitat:'极地海域', food:'浮游植物', predator:'鲸、海豹、企鹅', desc:`南极磷虾生物量巨大，是南极食物网的基石，形成密集群游动。它们能生物发光。` },
+    { id:187, name:'桡足类', period:'现代', habitat:'远洋', food:'浮游植物', predator:'磷虾、小鱼', desc:`桡足类是海洋浮游动物的重要组成部分，数量巨大，是食物链的基础。它们是地球上数量最多的多细胞动物之一。` },
+    { id:188, name:'海月水母', period:'寒武纪', habitat:'远洋', food:'浮游生物', predator:'海龟', desc:`海月水母透明伞状，有四个月牙形生殖腺，广泛分布于全球沿海。它们常见于港湾和河口。` },
+    { id:189, name:'僧帽水母', period:'现代', habitat:'远洋', food:'小鱼', predator:'海龟', desc:`僧帽水母是由多个个体组成的群体，浮囊体漂浮海面，触手可长达数十米。它们的毒液可致命。` },
+    { id:190, name:'鹿角珊瑚', period:'寒武纪', habitat:'珊瑚礁', food:'共生藻', predator:'海星', desc:`鹿角珊瑚是造礁珊瑚的主要种类，生长快速，形成复杂的枝状结构。它们对水温升高极为敏感。` },
+    { id:191, name:'公主海葵', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'海星', desc:`公主海葵拥有许多触手，与小丑鱼共生，分布广泛，为多种生物提供庇护。它们是水族馆常见物种。` },
+    { id:192, name:'海蛇尾', period:'奥陶纪', habitat:'深海', food:'碎屑', predator:'海星', desc:`海蛇尾腕足细长灵活，可快速爬行，是深海海底常见的棘皮动物。它们能断腕再生。` },
+    { id:193, name:'海百合', period:'奥陶纪', habitat:'深海', food:'浮游生物', predator:'海胆', desc:`海百合有柄固着于海底，羽状腕滤食，是古生代繁盛的生物类群。现存种类大多生活在深海。` },
+    { id:194, name:'巨型深海等足类', period:'现代', habitat:'深海', food:'尸体', predator:'鱼', desc:`巨型深海等足类像巨大的潮虫，体长可达30厘米，是深海底栖清道夫。它们能长时间不进食。` },
+    { id:195, name:'介形虫', period:'奥陶纪', habitat:'深海', food:'有机碎屑', predator:'鱼类', desc:`介形虫微小，有双壳，能发光，是深海生物发光的重要来源之一。它们常用于古环境研究。` },
+    { id:196, name:'文昌鱼', period:'寒武纪', habitat:'浅海', food:'浮游生物', predator:'鱼', desc:`文昌鱼是脊索动物，形态接近脊椎动物的祖先，半透明，钻沙生活。它们是重要的模式生物。` },
+    { id:197, name:'七鳃鳗', period:'现代', habitat:'河口', food:'血液', predator:'鱼类、鸟类', desc:`七鳃鳗是圆口纲动物，口呈吸盘状，吸附在鱼类身上吸血，古时曾是美食。它们有软骨无颌。` },
+    { id:198, name:'盲鳗', period:'现代', habitat:'深海', food:'尸体', predator:'鱼类', desc:`盲鳗会钻入死鱼体内取食，并分泌大量粘液防御，是海底清道夫。它们有原始的眼睛和四个心脏。` },
+    { id:199, name:'星海鞘', period:'现代', habitat:'浅海', food:'浮游生物', predator:'海星', desc:`星海鞘为群体海鞘，通过共用的出水孔排水，色彩鲜艳，常见于潮间带。它们是脊索动物。` },
+    { id:200, name:'火体虫', period:'现代', habitat:'远洋', food:'浮游生物', predator:'鱼类', desc:`火体虫是巨型管状被囊动物，能发出耀眼的蓝绿色光，体长可达数米。它们由无数个体组成群体。` },
+    { id:201, name:'比目鱼', period:'现代', habitat:'浅海沙地', food:'小鱼、甲壳动物', predator:'鲨鱼、海豹', desc:`比目鱼身体扁平，双眼位于同一侧，幼鱼经变态后一眼移至另一侧。它们隐藏在沙中伏击猎物，是重要的经济鱼类。` },
+    { id:202, name:'鳐鱼', period:'现代', habitat:'浅海沙地', food:'贝类、螃蟹', predator:'鲨鱼', desc:`鳐鱼与鲨鱼同属软骨鱼，身体扁平，胸鳍扩大如翼。它们用翼状胸鳍波浪式游动，常在海底觅食。` },
+    { id:203, name:'电鳐', period:'现代', habitat:'浅海', food:'小鱼', predator:'鲨鱼', desc:`电鳐能释放强大电流击昏猎物或防御，电流可达220伏。它们身体圆盘状，喜欢埋在沙中。` },
+    { id:204, name:'银鲛', period:'现代', habitat:'深海', food:'甲壳动物、小鱼', predator:'大型鱼类', desc:`银鲛又称鬼鲨，属于软骨鱼，生活在深海。它们有鞭状尾部，雄性额头有钩状器。` },
+    { id:205, name:'海蛾鱼', period:'现代', habitat:'浅海沙地', food:'小型蠕虫', predator:'大型鱼类', desc:`海蛾鱼身体卵圆形，被硬骨板覆盖，吻部延长。它们生活在浅海沙泥底，用吻部翻找食物。` },
+    { id:206, name:'锯鳐', period:'现代', habitat:'河口', food:'小鱼、甲壳动物', predator:'鲨鱼、人类', desc:`锯鳐拥有带齿的锯状吻部，用于搅动泥沙和击伤猎物。它们生活在热带河口和浅海，因过度捕捞濒危。` },
+    { id:207, name:'牛鲨', period:'现代', habitat:'河口', food:'鱼类、海豚', predator:'虎鲸', desc:`牛鲨能生活在淡水中，常深入河流和湖泊。它们攻击性强，是少数能进入内陆水域的鲨鱼。` },
+    { id:208, name:'双髻鲨', period:'现代', habitat:'温带海域', food:'鱼类、鱿鱼', predator:'虎鲸', desc:`双髻鲨头部向两侧扩展如锤子，眼睛位于两端，视野极佳。它们常成群迁徙，对电信号敏感。` },
+    { id:209, name:'姥鲨', period:'现代', habitat:'温带海域', food:'浮游生物', predator:'虎鲸', desc:`姥鲨是仅次于鲸鲨的第二大鱼类，体长可达12米。它们张着大嘴滤食浮游生物，性格温顺。` },
+    { id:210, name:'鲸鲨', period:'现代', habitat:'热带海域', food:'浮游生物、小鱼', predator:'虎鲸（偶尔）', desc:`鲸鲨是世界上最大的鱼类，体长可达20米。它们背上有独特的星斑图案，滤食浮游生物，是潜水员最爱的海洋生物之一。` },
+    { id:211, name:'冰鱼', period:'现代', habitat:'极地海域', food:'磷虾、小鱼', predator:'海豹、企鹅', desc:`冰鱼因血液中含有抗冻蛋白而能在南极冰水中生存。它们身体半透明，是研究抗冻机制的理想物种。` },
+    { id:212, name:'南极银鱼', period:'现代', habitat:'极地海域', food:'磷虾', predator:'企鹅、海豹', desc:`南极银鱼是南极海洋食物网的关键一环，数量庞大，为企鹅和海豹提供食物。它们没有鱼鳔。` },
+    { id:213, name:'狮子鱼（南极）', period:'现代', habitat:'极地海域', food:'小鱼、甲壳动物', predator:'无', desc:`南极狮子鱼生活在冰冷深海中，体色鲜艳，拥有抗冻蛋白。它们表皮无鳞，适应极地环境。` },
+    { id:214, name:'海蝴蝶', period:'现代', habitat:'极地海域', food:'浮游植物', predator:'磷虾、鱼类', desc:`海蝴蝶是一种带壳的翼足类软体动物，用变形的足如翅膀般游动。它们因壳易受海洋酸化影响而被关注。` },
+    { id:215, name:'磷海鞘', period:'现代', habitat:'远洋', food:'浮游生物', predator:'鱼类', desc:`磷海鞘是一种透明的浮游被囊动物，能发出蓝色荧光，集群时形成壮观的光带。它们数量庞大，是重要的碳汇。` },
+    { id:216, name:'翼足类', period:'现代', habitat:'远洋', food:'浮游植物', predator:'鲸、鱼类', desc:`翼足类俗称海蝴蝶，是小型浮游软体动物，外壳薄而易溶。它们是许多鲸类和鱼类的食物基础。` },
+    { id:217, name:'有孔虫', period:'寒武纪', habitat:'远洋', food:'浮游生物', predator:'桡足类', desc:`有孔虫是单细胞原生动物，拥有精致的碳酸钙外壳。它们的化石是地质和古气候研究的重要材料。` },
+    { id:218, name:'放射虫', period:'寒武纪', habitat:'深海', food:'浮游生物', predator:'桡足类', desc:`放射虫是有精美硅质骨骼的单细胞生物，常见于深海。它们的骨架堆积形成放射虫软泥。` },
+    { id:219, name:'硅藻', period:'侏罗纪', habitat:'远洋', food:'阳光、营养盐', predator:'磷虾', desc:`硅藻是微小的单细胞藻类，拥有硅质细胞壁。它们贡献了地球约20%的氧气产量，是海洋初级生产力的基础。` },
+    { id:220, name:'蓝藻', period:'太古宙', habitat:'浅海', food:'阳光、氮气', predator:'浮游动物', desc:`蓝藻是最早的光合生物之一，30亿年前就出现在海洋中。它们通过氧气革命改变了地球大气。` },
+    { id:221, name:'贝尔彻海蛇', period:'现代', habitat:'热带海域', food:'鱼类', predator:'海鹰', desc:`贝尔彻海蛇是毒性最烈的海蛇之一，生活在澳大利亚及东南亚珊瑚礁中。它们性格温顺，很少攻击。` },
+    { id:222, name:'海蛙', period:'现代', habitat:'河口', food:'昆虫、小鱼', predator:'蛇、鸟', desc:`海蛙是唯一能生活在咸水中的蛙类，存在于东南亚红树林。它们能耐受高盐度环境。` },
+    { id:223, name:'射水鱼', period:'现代', habitat:'河口', food:'昆虫', predator:'鸟类', desc:`射水鱼能喷射水柱击落树叶上的昆虫，准确度极高。它们生活在东南亚的河口和红树林。` },
+    { id:224, name:'弹涂鱼', period:'现代', habitat:'河口', food:'昆虫、小型甲壳动物', predator:'鸟类', desc:`弹涂鱼大部分时间在泥滩上爬行和跳跃，皮肤和口腔可辅助呼吸。它们是泥滩生态的标志。` },
+    { id:225, name:'招潮蟹', period:'现代', habitat:'河口', food:'有机碎屑、藻类', predator:'鸟类、鱼类', desc:`招潮蟹雄性有一只巨大的螯，用于求偶示威。它们群居在泥滩，退潮时钻出洞穴觅食。` },
+    { id:226, name:'红树林牡蛎', period:'现代', habitat:'河口', food:'浮游生物', predator:'螃蟹、海星', desc:`红树林牡蛎附着在红树林气生根上，过滤海水中的浮游生物。它们是重要的水质净化者。` },
+    { id:227, name:'红树林螃蟹', period:'现代', habitat:'河口', food:'落叶、藻类', predator:'鸟类', desc:`红树林螃蟹以红树林落叶为食，在生态系统中起到分解者的关键作用。有多种彩色类型。` },
+    { id:228, name:'海鲶鱼', period:'现代', habitat:'河口', food:'小鱼、甲壳动物', predator:'鲨鱼', desc:`海鲶鱼广泛分布于热带河口和近海，具有触须和坚硬的胸鳍棘。它们常成群活动。` },
+    { id:229, name:'海鲈鱼', period:'现代', habitat:'浅海', food:'小鱼、甲壳动物', predator:'鲨鱼、人类', desc:`海鲈鱼是近海重要的经济鱼类，肉质细嫩。它们游速快，适应范围广，常见于岩礁区。` },
+    { id:230, name:'石斑鱼', period:'现代', habitat:'珊瑚礁', food:'小鱼、甲壳动物', predator:'鲨鱼', desc:`石斑鱼体型厚重，口大，颜色多样。它们是珊瑚礁中的伏击捕食者，也是高档海鲜。` },
+    { id:231, name:'苏眉鱼', period:'现代', habitat:'珊瑚礁', food:'甲壳动物、贝类', predator:'鲨鱼', desc:`苏眉鱼额头隆起，体色鲜艳，是珊瑚礁中体型最大的隆头鱼之一。它们因过度捕捞而濒危。` },
+    { id:232, name:'拿破仑鱼', period:'现代', habitat:'珊瑚礁', food:'海胆、甲壳动物', predator:'鲨鱼', desc:`拿破仑鱼（波纹唇鱼）是大型珊瑚礁鱼类，体长可达2米。它们用强壮的牙齿咬碎海胆。` },
+    { id:233, name:'鹰鳐', period:'现代', habitat:'珊瑚礁', food:'贝类、螃蟹', predator:'鲨鱼', desc:`鹰鳐又名斑点鹰鳐，身体有美丽斑点，常在珊瑚礁上空滑翔。它们能用喷水孔吹开沙子觅食。` },
+    { id:234, name:'海鲂', period:'现代', habitat:'深海', food:'小型鱼类', predator:'大型鱼类', desc:`海鲂身体侧扁，形似圆盘，具有一个大口和突出的颌。它们生活在深海，是美味海鲜。` },
+    { id:235, name:'金眼鲷', period:'现代', habitat:'深海', food:'小鱼、乌贼', predator:'大型鱼类', desc:`金眼鲷因大眼睛而适应深海暗光，体色鲜红。它们是深海渔业的重要目标之一。` },
+    { id:236, name:'深海鳕鱼', period:'现代', habitat:'深海', food:'小鱼、甲壳动物', predator:'大型鱼类', desc:`深海鳕鱼生活在中深层，肉质鲜美，是重要的商业鱼种。它们集群活动，可耐高压低温。` },
+    { id:237, name:'绵鳚', period:'现代', habitat:'深海', food:'甲壳动物、蠕虫', predator:'大型鱼类', desc:`绵鳚身体柔软，形似鳗鱼，适应深海生活。它们广泛分布在大陆坡，有些种类可卵胎生。` },
+    { id:238, name:'宽咽鱼', period:'现代', habitat:'深海', food:'浮游生物、小鱼', predator:'大型鱼类', desc:`宽咽鱼有巨大张开的嘴和极度扩张的喉咙，能吞下大量海水滤食浮游生物。` },
+    { id:239, name:'三脚鱼', period:'现代', habitat:'深海', food:'浮游生物', predator:'大型鱼类', desc:`三脚鱼用延长的腹鳍和尾鳍像三脚架一样站在海底，面向海流，等待浮游生物。` },
+    { id:240, name:'大鳍鱿鱼', period:'现代', habitat:'深海', food:'小鱼、鱿鱼', predator:'抹香鲸', desc:`大鳍鱿鱼以巨大的鳍与身体比例和弯曲的长臂著称，生活在数千米深海，罕见。` },
+    { id:241, name:'螺旋虫', period:'现代', habitat:'深海', food:'有机碎屑', predator:'无', desc:`螺旋虫是深海热泉管虫的一种，具有白色管栖，与硫细菌共生，摄取化学能。` },
+    { id:242, name:'庞贝虫', period:'现代', habitat:'海底热泉', food:'共生细菌', predator:'螃蟹', desc:`庞贝虫是已知最耐热的动物之一，能在80℃的热泉口生存。它们背部覆盖共生细菌。` },
+    { id:243, name:'鳞脚蜗牛', period:'现代', habitat:'海底热泉', food:'共生细菌', predator:'螃蟹', desc:`鳞脚蜗牛拥有铁甲外壳和鳞状足，是全球唯一的带鳞蜗牛，生活在印度洋深海热泉。` },
+    { id:244, name:'盲虾', period:'现代', habitat:'海底热泉', food:'共生细菌', predator:'鱼类', desc:`盲虾没有眼睛，背部有光感器官。它们大量聚集在热泉周围，依靠细菌硫化物共生。` },
+    { id:245, name:'雪人蟹', period:'现代', habitat:'海底热泉', food:'共生细菌', predator:'鱼类', desc:`雪人蟹螯上覆盖着浓密的刚毛，用于培育细菌作为食物。它们生活在太平洋深海热泉区。` },
+    { id:246, name:'管虫', period:'现代', habitat:'海底热泉', food:'共生细菌', predator:'螃蟹', desc:`管虫是深海热泉的标志生物，拥有鲜红色羽状鳃，体内共生硫细菌，不需口和消化系统。` },
+    { id:247, name:'海泡螺', period:'现代', habitat:'浅海', food:'藻类', predator:'无', desc:`海泡螺是小型有壳腹足动物，壳呈卵形，色彩多样。它们食藻，是常见的水族箱清道夫。` },
+    { id:248, name:'芋螺', period:'现代', habitat:'珊瑚礁', food:'小鱼、蠕虫', predator:'几乎没有', desc:`芋螺是有毒的海螺，用齿舌发射毒液麻痹猎物。其毒素成分复杂，可用于制药。` },
+    { id:249, name:'宝贝螺', period:'现代', habitat:'珊瑚礁', food:'藻类', predator:'章鱼', desc:`宝贝螺外壳光滑如瓷，色彩艳丽。古时常被用作货币，故有“宝贝”之名。` },
+    { id:250, name:'法螺', period:'现代', habitat:'珊瑚礁', food:'海星', predator:'章鱼', desc:`法螺是大型海螺，能捕食棘冠海星，是控制海星数量的重要天敌。其壳可用作号角。` },
+    { id:251, name:'叶海蛞蝓', period:'现代', habitat:'浅海', food:'藻类、珊瑚', predator:'几乎没有', desc:`叶海蛞蝓形态酷似多叶植物，模拟能力强，是最优秀的伪装大师之一。它们从食物中获取叶绿体进行光合作用。` },
+    { id:252, name:'蓝龙', period:'现代', habitat:'远洋', food:'僧帽水母', predator:'几乎没有', desc:`蓝龙是大西洋海神海蛞蝓，身体蓝白相间，以僧帽水母为食，并储存其毒刺用于自身防御。` },
+    { id:253, name:'海蜗牛', period:'现代', habitat:'远洋', food:'水母', predator:'鱼类', desc:`海蜗牛是浮游性腹足动物，用泡沫浮囊漂浮水面。它们色彩鲜艳，以水母为食。` },
+    { id:254, name:'海蜇', period:'现代', habitat:'远洋', food:'浮游生物', predator:'海龟', desc:`海蜇是一种大型食用水母，加工后成为海蜇皮。它们广泛分布于东亚沿海。` },
+    { id:255, name:'灯水母', period:'现代', habitat:'浅海', food:'浮游生物', predator:'海龟', desc:`灯水母伞体小，能发出荧光，在夜晚水面形成璀璨光斑。它们常见于温暖海域。` },
+    { id:256, name:'十字水母', period:'现代', habitat:'浅海', food:'浮游生物', predator:'无', desc:`十字水母是固着性水母，附着在海草或岩石上，形似小花。它们用触手捕捉浮游动物。` },
+    { id:257, name:'地毯海葵', period:'现代', habitat:'珊瑚礁', food:'浮游生物、小鱼', predator:'海星', desc:`地毯海葵体型巨大，颜色艳丽，是小丑鱼的首选宿主。它们有毒的触手覆盖在浅海礁石上。` },
+    { id:258, name:'羽毛管虫', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'鱼类', desc:`羽毛管虫将羽毛状触手伸出钙质管，过滤浮游生物，一受惊就缩回管内。色彩丰富。` },
+    { id:259, name:'海葵蟹', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'鱼类', desc:`海葵蟹用钳子举着两只小海葵，既用于防御又可用其毒刺捕食，是互利共生的典范。` },
+    { id:260, name:'拳击蟹', period:'现代', habitat:'珊瑚礁', food:'浮游生物', predator:'鱼类', desc:`拳击蟹常携带小型海葵在钳上，像戴着拳击手套，用以威慑捕食者。` },
+    { id:261, name:'海尾蛇', period:'现代', habitat:'深海', food:'浮游生物', predator:'鱼类', desc:`海尾蛇是蛇尾的一种，腕上分叉如篮子，能滤食浮游物，形成复杂华丽的腕网。` },
+    { id:262, name:'阳燧足', period:'现代', habitat:'浅海', food:'碎屑', predator:'鱼类', desc:`阳燧足是海蛇尾的别称，腕细长灵活，可再生，是海底快速移动的清道夫。` },
+    { id:263, name:'海钱', period:'现代', habitat:'浅海沙地', food:'碎屑', predator:'鱼类', desc:`海钱是扁平的海胆，硬币形，刺短密。它们群居在沙中，滤食有机颗粒。` },
+    { id:264, name:'心形海胆', period:'现代', habitat:'浅海沙地', food:'碎屑', predator:'鱼类', desc:`心形海胆身体呈不规则心形，生活在沙泥底，吞食沉积物获取有机质，对生物扰动重要。` },
+    { id:265, name:'脆星', period:'现代', habitat:'珊瑚礁', food:'碎屑', predator:'鱼类', desc:`脆星是海蛇尾的一种，腕极易断裂再生，晚上爬出礁缝觅食，移动迅速。` },
+    { id:266, name:'有柄海百合', period:'奥陶纪', habitat:'深海', food:'浮游生物', predator:'海胆', desc:`有柄海百合通过长柄固定在海底，羽状腕向海流展开滤食，是远古海洋的孑遗。` },
+    { id:267, name:'海蕾', period:'奥陶纪', habitat:'浅海', food:'浮游生物', predator:'无', desc:`海蕾是已灭绝的棘皮动物，形似花蕾，在奥陶纪和志留纪海洋中繁盛一时。` },
+    { id:268, name:'笔石', period:'奥陶纪', habitat:'远洋', food:'浮游生物', predator:'无', desc:`笔石是已灭绝的群体浮游动物，化石如铅笔痕迹，是重要的奥陶纪和志留纪标准化石。` },
+    { id:269, name:'菊石', period:'泥盆纪', habitat:'远洋', food:'浮游生物、小鱼', predator:'鱼龙、沧龙', desc:`菊石是已灭绝的头足动物，壳卷曲，是中生代海洋的标志化石。它们与恐龙同期灭绝。` },
+    { id:270, name:'箭石', period:'侏罗纪', habitat:'远洋', food:'小鱼、浮游生物', predator:'鱼龙', desc:`箭石是已灭绝的头足类，形状像现代鱿鱼但有内壳，是侏罗纪和白垩纪的重要游泳动物。` },
+    { id:271, name:'邓氏鱼', period:'泥盆纪', habitat:'浅海', food:'鱼类、鲨鱼', predator:'无', desc:`邓氏鱼是泥盆纪最大的盾皮鱼，体长可达10米，头部覆盖厚重甲片，咬合力惊人。` },
+    { id:272, name:'巨牙鲨', period:'古近纪', habitat:'远洋', food:'鲸类', predator:'无', desc:`巨牙鲨是史上最大的鲨鱼，体长可达18米以上，以大型鲸为食，在中新世灭绝。` },
+    { id:273, name:'沧龙', period:'白垩纪', habitat:'浅海', food:'鱼类、菊石、蛇颈龙', predator:'无', desc:`沧龙是白垩纪晚期的巨型海生爬行动物，与恐龙同时灭绝，长可达17米，是顶级海洋掠食者。` },
+    { id:274, name:'蛇颈龙', period:'侏罗纪', habitat:'浅海', food:'鱼、鱿鱼', predator:'沧龙', desc:`蛇颈龙有长颈和小头，身体宽扁，四肢呈桨状。它们是侏罗纪海洋的代表性动物。` },
+    { id:275, name:'鱼龙', period:'三叠纪', habitat:'远洋', food:'鱼、乌贼', predator:'沧龙', desc:`鱼龙是中生代完全适应海洋生活的爬行动物，外形似现代海豚。它们卵胎生，游速快。` },
+    { id:276, name:'海蝎子', period:'志留纪', habitat:'浅海', food:'鱼、三叶虫', predator:'无', desc:`海蝎子（板足鲎）是古生代的巨型节肢动物，体长可达2米以上，是志留纪的顶级掠食者。` },
+    { id:277, name:'三叶虫', period:'寒武纪', habitat:'浅海', food:'有机碎屑', predator:'奇虾、海蝎子', desc:`三叶虫是古生代最著名的节肢动物，背甲分三叶，种类繁多，是寒武纪至二叠纪的标准化石。` },
+    { id:278, name:'奇虾', period:'寒武纪', habitat:'浅海', food:'三叶虫、蠕虫', predator:'无', desc:`奇虾是寒武纪最大的动物之一，体长可达1米，拥有环状锯齿口器和桨状前肢。` },
+    { id:279, name:'欧巴宾海蝎', period:'寒武纪', habitat:'浅海', food:'浮游生物、蠕虫', predator:'奇虾', desc:`欧巴宾海蝎有五个茎状眼和带爪的吻部，形态奇特，是寒武纪大爆发的代表生物。` },
+    { id:280, name:'怪诞虫', period:'寒武纪', habitat:'浅海', food:'浮游生物', predator:'无', desc:`怪诞虫身体细长，背部长有多对硬刺，腹部有软足，最初复原被颠倒，是著名的伯吉斯页岩动物。` },
+    { id:281, name:'微网虫', period:'寒武纪', habitat:'浅海', food:'碎屑', predator:'奇虾', desc:`微网虫全身覆盖鳞片状骨板，早期化石被误认为网状结构。它们是寒武纪底栖滤食动物。` },
+    { id:282, name:'海口鱼', period:'寒武纪', habitat:'浅海', food:'浮游生物', predator:'奇虾', desc:`海口鱼是最早的脊椎动物之一，发现于中国云南澄江动物群，标志着脊椎动物起源。` },
+    { id:283, name:'昆明鱼', period:'寒武纪', habitat:'浅海', food:'浮游生物', predator:'奇虾', desc:`昆明鱼是已知最古老的脊椎动物，具有简单头骨和鳃，产于5.3亿年前的中国寒武纪。` },
+    { id:284, name:'牙形石', period:'寒武纪', habitat:'远洋', food:'浮游生物', predator:'鱼类', desc:`牙形石是已灭绝的脊索动物，留下微小的齿形化石，是重要的地层对比工具。` },
+    { id:285, name:'内鼻孔鱼', period:'泥盆纪', habitat:'浅海', food:'小鱼', predator:'大型鱼类', desc:`内鼻孔鱼是肉鳍鱼类，具有内鼻孔，被认为是四足动物的祖先近亲。` },
+    { id:286, name:'腔棘鱼', period:'泥盆纪', habitat:'深海', food:'小鱼', predator:'大型鱼类', desc:`腔棘鱼是著名的“活化石”，曾被认为灭绝6500万年，直到1938年被重新发现。` },
+    { id:287, name:'肺鱼', period:'泥盆纪', habitat:'河口', food:'鱼、甲壳动物', predator:'无', desc:`肺鱼有鳃也有肺，在旱季能钻入泥中休眠。是现存最接近四足动物的鱼类。` },
+    { id:288, name:'矛尾鱼', period:'现代', habitat:'深海', food:'鱼、鱿鱼', predator:'无', desc:`矛尾鱼是现存腔棘鱼的一种，生活在印度洋深水洞穴中。它们有高度特化的鳍。` },
+    { id:289, name:'棱皮龟', period:'现代', habitat:'远洋', food:'水母', predator:'虎鲸', desc:`棱皮龟是最大的海龟，背甲革质，能深潜至1200米。它们主食水母，易误食塑料袋。` },
+    { id:290, name:'赤蠵龟', period:'现代', habitat:'浅海', food:'蟹、水母', predator:'鲨鱼', desc:`赤蠵龟是大型海龟，头部较大，颌部强健，能咬碎蟹壳。分布于全球温带和热带海域。` },
+    { id:291, name:'肯氏龟', period:'现代', habitat:'浅海', food:'蟹', predator:'鲨鱼', desc:`肯氏龟是最濒危的海龟之一，主要分布于墨西哥湾，每年只在少数海滩产卵。` },
+    { id:292, name:'港海豹', period:'现代', habitat:'温带海域', food:'鱼、鱿鱼', predator:'虎鲸', desc:`港海豹是最常见的海豹之一，体色有斑点，常出现在港湾和河口。它们好奇心强。` },
+    { id:293, name:'带纹海豹', period:'现代', habitat:'极地海域', food:'鱼、甲壳动物', predator:'北极熊', desc:`带纹海豹身上有两道黑纹，能在冰下长距离潜水，分布于北冰洋和邻近海域。` },
+    { id:294, name:'南美海狮', period:'现代', habitat:'温带海域', food:'鱼、鱿鱼', predator:'虎鲸', desc:`南美海狮又名南美毛皮海狮，有小外耳，常成群活动于南美洲沿海。` },
+    { id:295, name:'太平洋海象', period:'现代', habitat:'极地海域', food:'蛤蜊', predator:'虎鲸', desc:`太平洋海象长牙粗大，胡须浓密，用唇部吸食蛤蜊。它们依赖海冰栖息。` },
+    { id:296, name:'库克湾白鲸', period:'现代', habitat:'极地海域', food:'鱼、鱿鱼', predator:'虎鲸', desc:`库克湾白鲸是阿拉斯加库克湾的孤立种群，数量极少，受工业开发威胁。` },
+    { id:297, name:'热海豚', period:'现代', habitat:'热带海域', food:'鱼、鱿鱼', predator:'鲨鱼', desc:`热海豚常见于暖水海域，体型纤长，常与金枪鱼群伴游，易被围网误捕。` },
+    { id:298, name:'斑纹原海豚', period:'现代', habitat:'热带海域', food:'鱼', predator:'鲨鱼', desc:`斑纹原海豚侧身有斑纹，游速快，善于跳跃。分布于太平洋热带水域。` },
+    { id:299, name:'大西洋斑海豚', period:'现代', habitat:'温带海域', food:'鱼、鱿鱼', predator:'鲨鱼', desc:`大西洋斑海豚身上有斑点和条纹，活泼好动，常出现在大西洋温带近海。` },
+    { id:300, name:'沙捞越海豚', period:'现代', habitat:'浅海', food:'鱼', predator:'鲨鱼', desc:`沙捞越海豚是东南亚特有小型海豚，吻部短，体色粉红，生活在河口和近岸水域，十分罕见。` }
+];
+    const STORAGE_KEY = 'ocean_300_full';
+    function loadData() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultCreatures));
+        return JSON.parse(JSON.stringify(defaultCreatures));
+    }
+    function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+    let creatures = loadData();
+    let nextId = creatures.length ? Math.max(...creatures.map(c=>c.id)) + 1 : 301;
+
+    function renderCards(data = null) {
+        const list = data || creatures;
+        const grid = document.getElementById('cardsGrid');
+        if (!list.length) {
+            grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">暂无生物数据</div>';
+        } else {
+            grid.innerHTML = list.map(c => `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">${c.name}</span>
+                        <span>
+                            <button class="btn" style="padding:4px 8px;margin-right:4px;" onclick="editCreature(${c.id})">编辑</button>
+                            <button class="btn" style="padding:4px 8px;" onclick="deleteCreature(${c.id})">删除</button>
+                        </span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">${c.period}</span>
+                        <span class="tag">${c.habitat}</span>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-cell"><small style="color:var(--muted);">食物</small><br>${c.food}</div>
+                        <div class="info-cell"><small style="color:var(--muted);">天敌</small><br>${c.predator}</div>
+                    </div>
+                    <div class="desc" id="desc-${c.id}">${c.desc}</div>
+                    <button class="expand-btn" onclick="toggleDesc(${c.id})">展开更多</button>
+                </div>
+            `).join('');
+        }
+        updateStats(list);
+    }
+
+    function updateStats(data) {
+        document.getElementById('totalCount').textContent = data.length;
+        document.getElementById('habitatCount').textContent = new Set(data.map(c=>c.habitat)).size;
+        document.getElementById('periodCount').textContent = new Set(data.map(c=>c.period)).size;
+    }
+
+    window.toggleDesc = (id) => document.getElementById('desc-' + id).classList.toggle('expanded');
+
+    let editId = null;
+    window.openModal = () => {
+        editId = null;
+        document.getElementById('modalTitle').textContent = '添加海洋生物';
+        document.getElementById('bioForm').reset();
+        document.getElementById('modalOverlay').style.display = 'flex';
+    };
+    window.editCreature = (id) => {
+        const c = creatures.find(c=>c.id===id);
+        if(!c) return;
+        editId = id;
+        document.getElementById('modalTitle').textContent = '编辑海洋生物';
+        document.getElementById('editId').value = c.id;
+        document.getElementById('inputName').value = c.name;
+        document.getElementById('inputPeriod').value = c.period;
+        document.getElementById('inputHabitat').value = c.habitat;
+        document.getElementById('inputFood').value = c.food;
+        document.getElementById('inputPredator').value = c.predator;
+        document.getElementById('inputDesc').value = c.desc;
+        document.getElementById('modalOverlay').style.display = 'flex';
+    };
+    window.closeModal = () => document.getElementById('modalOverlay').style.display = 'none';
+    window.deleteCreature = (id) => {
+        if(!confirm('确定删除？')) return;
+        creatures = creatures.filter(c=>c.id!==id);
+        saveData(creatures); renderCards();
+    };
+    window.handleSubmit = (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('inputName').value.trim(),
+            period: document.getElementById('inputPeriod').value,
+            habitat: document.getElementById('inputHabitat').value,
+            food: document.getElementById('inputFood').value.trim(),
+            predator: document.getElementById('inputPredator').value.trim(),
+            desc: document.getElementById('inputDesc').value.trim(),
+        };
+        if(!data.name||!data.period||!data.habitat||!data.food||!data.predator||!data.desc) return alert('请填写完整');
+        if(editId) {
+            const idx = creatures.findIndex(c=>c.id===editId);
+            if(idx!==-1) creatures[idx] = { ...creatures[idx], ...data };
+        } else {
+            creatures.unshift({ id: nextId++, ...data });
+        }
+        saveData(creatures); renderCards(); closeModal();
+    };
+
+    window.toggleSearch = () => document.getElementById('searchBox').style.display = document.getElementById('searchBox').style.display==='none'?'block':'none';
+    window.filterCards = () => {
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
+        renderCards(q ? creatures.filter(c => Object.values(c).some(v => String(v).toLowerCase().includes(q))) : null);
+    };
+    window.resetData = () => {
+        if(!confirm('恢复默认海洋生物？')) return;
+        creatures = JSON.parse(JSON.stringify(defaultCreatures));
+        saveData(creatures); renderCards();
+    };
+
+    // 智能问答
+    window.toggleQA = () => document.getElementById('qaBox').classList.toggle('open');
+    window.sendQ = () => {
+        const input = document.getElementById('qaInput');
+        const question = input.value.trim();
+        if(!question) return;
+        addMsg(question, 'user');
+        input.value = '';
+        setTimeout(() => addMsg(localAnswer(question), 'bot'), 300);
+    };
+    function addMsg(text, sender) {
+        const div = document.createElement('div');
+        div.className = `msg ${sender}`;
+        div.textContent = text;
+        document.getElementById('qaMessages').appendChild(div);
+        div.scrollIntoView({behavior:'smooth'});
+    }
+    function localAnswer(query) {
+        const q = query.toLowerCase();
+        const matched = creatures.find(c => q.includes(c.name.toLowerCase()));
+        if (matched) {
+            if (q.includes('食物') || q.includes('吃什么')) return `${matched.name}的食物：${matched.food}。`;
+            if (q.includes('天敌') || q.includes('谁吃')) return `${matched.name}的天敌：${matched.predator}。`;
+            if (q.includes('时期') || q.includes('时代')) return `${matched.name}生活在${matched.period}。`;
+            if (q.includes('环境') || q.includes('栖息')) return `${matched.name}的栖息环境：${matched.habitat}。`;
+            return `关于${matched.name}：${matched.desc}`;
+        }
+        if (q.includes('珊瑚礁')) {
+            const list = creatures.filter(c => c.habitat === '珊瑚礁').map(c => c.name).join('、');
+            return `珊瑚礁生物有：${list.substring(0,200)}…共${creatures.filter(c=>c.habitat==='珊瑚礁').length}种。`;
+        }
+        if (q.includes('深海')) {
+            const list = creatures.filter(c => c.habitat === '深海').map(c => c.name).join('、');
+            return `深海生物：${list.substring(0,200)}…共${creatures.filter(c=>c.habitat==='深海').length}种。`;
+        }
+        return '未找到相关信息，试试输入生物名称（如“蓝鲸吃什么”），或查询“珊瑚礁”“深海”等环境。';
+    }
+
+    renderCards();
+</script>
+</body>
+</html>
